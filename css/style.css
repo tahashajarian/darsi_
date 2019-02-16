@@ -552,7 +552,7 @@ div#map {
 }
 
 .wallet_amount button, .wallet_sharj button {
-    margin: 20px;
+    margin: 10px;
     width: 120px;
     font-size: 12pt;
     border: none;
@@ -1146,4 +1146,56 @@ div#map {
 }
 .change_able {
     text-decoration: underline;
+}
+#invoice {
+    display: none;
+}
+.wallet_input_radio {
+    display: none;
+    width: 100%;
+}
+
+.amount_wallet_sharj_div_button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.amount_wallet_sharj_div {
+    width: 60%;
+    margin: 15px auto;
+    padding: 5px;
+    border-radius: 8px;
+    font-size: 12pt;
+    border: 2px solid #025b84;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: white;
+    position: relative;
+}
+span.wallet_sharj_radio {
+    width: 15px;
+    height: 15px;
+    border: 3px solid gray;
+    border-radius: 50%;
+    background: white;
+    position: absolute;
+    right: 10px;
+}
+.wallet_sharj_price {
+    
+}
+.amount_wallet_sharj_input {
+    width: 60%;
+    height: 30px;
+}
+.amount_wallet_sharj_div_input {
+    text-align: center;
+}
+#wallet_page_2 {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

@@ -279,6 +279,15 @@ const next_page = title => {
                 history_order++;
                 $("#back").css('color', '#1A7395');
                 break;
+                case "wallet":
+                titles_wallet.push(title);
+                scrollRight = $("#wallet").scrollLeft() + $(".wallet_page").width();
+                $('#wallet').animate({scrollLeft: scrollRight + 'px'}, 600).promise().done(function () {
+                    loading = 0;
+                });
+                wallet++;
+                $("#back").css('color', '#1A7395');
+                break;
             default:
                 console.log("active_page ", active_article, " not definded");
                 break;
@@ -367,11 +376,24 @@ const prev_page = () => {
                     loading = 0;
                 });
                 history_order--;
-
                 $("#title_main").text(titles_history[titles_history.length - 1]);
                 if (history_order <= 0) {
                     history_order = 0;
                     titles_history = ["تاریخچه سفارشات"];
+                    $("#back").css('color', '#8080808c');
+                }
+                break;
+                case "wallet":
+                titles_wallet.pop();
+                scrollLeft = $("#wallet").scrollLeft() - $(".wallet_page").width();
+                $('#wallet').animate({scrollLeft: scrollLeft + 'px'}, 600).promise().done(function () {
+                    loading = 0;
+                });
+                wallet--;
+                $("#title_main").text(titles_wallet[titles_wallet.length - 1]);
+                if (wallet <= 0) {
+                    wallet = 0;
+                    titles_wallet = ["کیف پول"];
                     $("#back").css('color', '#8080808c');
                 }
                 break;
@@ -714,27 +736,87 @@ const ready_user_update = (element) => {
 
 const wallet_fill = (data, target) => {
     // TODO: we are here 
+    let invoice = "";
+    $.each(data.invoice, function (index,value) {
+        invoice += /*html*/ `<tr>
+                                <td>${parseInt(index)+1}</td>
+                                <td>${value.date}</td>
+                                <td>${value.operator}</td>
+                                <td>${cama_for_digit(value.amount)}</td>
+                                <td>${cama_for_digit(value.inventory)}</td>
+                            </tr>`
+    });
+
     $(target).html( /*html*/
         `<div class='wallet'>
             <div class='wallet_amount'>
                 <p>موجودی کیف پول (اعتبار)</p>
                 <p class="the_amount_wallet"> ${cama_for_digit(data.amount_wallet)} تومان</p>
-                <button class="cbtn">صورتحساب</button>
+                <button onclick="show_invoice()" class="cbtn">صورتحساب</button>
+                <div id="invoice">
+                    <table class="bascket_table">
+                        <colgroup>
+                            <col width="10%" />
+                            <col width="20%" />
+                            <col width="30%" />
+                            <col width="20%" />
+                            <col width="20%" />
+                        </colgroup>
+                        <tr>
+                            <th>ردیف</th>
+                            <th>تاریخ</th>
+                            <th>نوع عملیات</th>
+                            <th>مبلغ</th>
+                            <th>موجودی</th>
+                        </tr>
+                        ${invoice}
+                    </table>
+                </div>
             </div>
             <div class='wallet_sharj'>
-                <button class="cbtn">افزایش اعتبار</button>
+                <button onclick="show_wallet_input_radio()" class="cbtn">افزایش اعتبار</button>
                 <div class='wallet_input_radio'>
-                    <div><input type='radio' name='wallet_sharj_amount'>5000 </div>
-                    <div><input type='radio' name='wallet_sharj_amount'>10000 </div>
-                    <div><input type='radio' name='wallet_sharj_amount'>20000 </div>
-                    <div><input type='radio' name='wallet_sharj_amount'>50000 </div>
-                    <div><input type='radio' name='wallet_sharj_amount'>100000 </div>
-                    <div><button class="cbtn">پرداخت</button></div>
+                    <div onclick="select_this_amount_for_sharj(this)" class="amount_wallet_sharj_div"><span class="wallet_sharj_price"> ${cama_for_digit(5000)}    تومان </span><span class="wallet_sharj_radio"></span></div>
+                    <div onclick="select_this_amount_for_sharj(this)" class="amount_wallet_sharj_div"><span class="wallet_sharj_price"> ${cama_for_digit(10000)}   تومان </span><span class="wallet_sharj_radio"></span></div>
+                    <div onclick="select_this_amount_for_sharj(this)" class="amount_wallet_sharj_div"><span class="wallet_sharj_price"> ${cama_for_digit(20000)}   تومان </span><span class="wallet_sharj_radio"></span></div>
+                    <div onclick="select_this_amount_for_sharj(this)" class="amount_wallet_sharj_div"><span class="wallet_sharj_price"> ${cama_for_digit(50000)}   تومان </span><span class="wallet_sharj_radio"></span></div>
+                    <div onclick="select_this_amount_for_sharj(this)" class="amount_wallet_sharj_div"><span class="wallet_sharj_price"> ${cama_for_digit(100000)}  تومان </span><span class="wallet_sharj_radio"></span></div>
+                    <div onkeydown="select_this_amount_for_sharj(this)" class="amount_wallet_sharj_div_input"><input class="cinput amount_wallet_sharj_input" type="text"></div>
+                    <div   class="amount_wallet_sharj_div_button"><button onclick="pay_amount_wallet()" class="cbtn">پرداخت</button></div>
                 </div>
             </div>
         </div>`
     );
 };
+
+const pay_amount_wallet = () => {
+    $("#wallet_page_2").html(`پرداخت`)
+    next_page("شارژ کیف پول");
+}
+
+const show_invoice = () => {
+    $("#invoice").slideToggle();
+    $(".wallet_input_radio").slideUp();
+}
+
+const show_wallet_input_radio = () => {
+    $(".wallet_input_radio").slideToggle();
+    $("#invoice").slideUp();
+}
+
+const select_this_amount_for_sharj = (element) => {
+    $(".wallet_sharj_price").css("color","black");
+    $(".wallet_sharj_radio").css({
+        "background-color":"white",
+        "border-color":"gray"
+    });
+    $(element).find(".wallet_sharj_price").css("color","#025b84");
+    $(element).find(".wallet_sharj_radio").css({
+        "background-color":"#025b84",
+        "border-color":"#025b84" 
+    });
+    $(".amount_wallet_sharj_input").val( $(element).find(".wallet_sharj_price").text().replace("/","").replace("تومان",""))
+}
 
 const history_orders_fill = (data, target) => {
     $(target).html("");
