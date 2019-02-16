@@ -105,7 +105,7 @@ const main_button = target => {
                 }
                 if (titles_wallet.length <= 1) $("#back").css('color', '#8080808c');
                 $("#title_main").text(titles_wallet[titles_wallet.length - 1]);
-                wallet_get(20);
+                wallet_get();
                 break;
             case "history_order":
                 if (titles_history.length === 0) {
@@ -718,18 +718,18 @@ const wallet_fill = (data, target) => {
         `<div class='wallet'>
             <div class='wallet_amount'>
                 <p>موجودی کیف پول (اعتبار)</p>
-                <p>20000 تومان</p>
-                <button calss="cbtn">صورتحساب</button>
+                <p class="the_amount_wallet"> ${cama_for_digit(data.amount_wallet)} تومان</p>
+                <button class="cbtn">صورتحساب</button>
             </div>
             <div class='wallet_sharj'>
-                <p>افزایش اعتبار</p>
+                <button class="cbtn">افزایش اعتبار</button>
                 <div class='wallet_input_radio'>
                     <div><input type='radio' name='wallet_sharj_amount'>5000 </div>
                     <div><input type='radio' name='wallet_sharj_amount'>10000 </div>
                     <div><input type='radio' name='wallet_sharj_amount'>20000 </div>
                     <div><input type='radio' name='wallet_sharj_amount'>50000 </div>
                     <div><input type='radio' name='wallet_sharj_amount'>100000 </div>
-                    <div><button>پرداخت</button></div>
+                    <div><button class="cbtn">پرداخت</button></div>
                 </div>
             </div>
         </div>`

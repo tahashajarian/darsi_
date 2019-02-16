@@ -109,11 +109,61 @@ const get_root_item = (id , target, title) => {
 //     profile_fill(data, "#profile_page_1");
 // };
 
-const wallet_get = user_id => {
+const wallet_get = () => {
     // یوزر آیدی بهت میدم مبلغ کیف پولشو بهم بده به همراه تراکنشاش تو جدول ولت
-    console.log(user_id);
+    //  اگه یوزر رو نداری بهم بگو که بگم لاگین کنه اگه هم داری چیزایی که ازت میخام رو بهم بده
     let data = {
-        "1":"2"
+        "amount_wallet": "13000",
+        "invoice": {
+            "0": {
+                "date": "1397/05/01",
+                "operator": "buy",
+                "amount": "10000",
+                "inventory": "14000"
+            },
+            "1": {
+                "date": "1397/06/01",
+                "operator": "buy",
+                "amount": "10000",
+                "inventory": "14000"
+            },
+            "2": {
+                "date": "1397/07/01",
+                "operator": "buy",
+                "amount": "10000",
+                "inventory": "14000"
+            },
+            "3": {
+                "date": "1397/08/01",
+                "operator": "buy",
+                "amount": "10000",
+                "inventory": "14000"
+            }, 
+            "4": {
+                "date": "1397/09/01",
+                "operator": "buy",
+                "amount": "10000",
+                "inventory": "14000"
+            },
+            "5": {
+                "date": "1397/10/01",
+                "operator": "buy",
+                "amount": "10000",
+                "inventory": "14000"
+            },
+            "6": {
+                "date": "1397/11/01",
+                "operator": "buy",
+                "amount": "10000",
+                "inventory": "14000"
+            },
+            "7": {
+                "date": "1397/12/01",
+                "operator": "buy",
+                "amount": "10000",
+                "inventory": "14000"
+            }
+        }
     };
     wallet_fill(data, "#wallet_page_1");
 };
