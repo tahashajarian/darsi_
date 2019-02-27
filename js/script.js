@@ -2,6 +2,10 @@
 
 
 $(document).ready(function () {
+    console.log("referer => ",document.referrer);
+    if (document.referrer ==  "https://sep.shaparak.ir/Payment.aspx?Amount=120000&MID=11108164&ResNum=69074&Wage=0&RedirectURL=https%3a%2f%2fshop.partapp.ir%2forder%2fui%2f2%2findex.html") {
+        snackbar("!پرداخت ناموفق بود");
+    }
     main_button("home");
     window.parent.postMessage('1', '*');
     window.top.postMessage('1', '*');
@@ -17,34 +21,41 @@ $(document).ready(function () {
 
     L.easyButton('<i onclick="user_get_location()" class="fa fa-crosshairs"></i>', function () {
     }).addTo(mymap);
+    spinner("end");
 });
-
-// define variable
-let user_id = 3590;
-let shop_id = 110;
-let titles_home = [];
-let titles_search = [];
-let titles_locations = [];
-let titles_bascket = [];
-let titles_profile = [];
-let titles_wallet = [];
-let titles_history = [];
-let titles_messages = [];
-let titles_doctor = [];
-let loading = 0;
-let home = 0;
-let history_order = 0;
-let search = 0;
-let locations = 0;
-let bascket = 0;
-let data = {};
-let order_list = [], active_article, is_open, scrollRight, scrollLeft;
+    
+// define variable    
+let user_id              = 3590;
+let shop_id              = 110;
+let titles_home          = [];
+let titles_search        = [];
+let titles_locations     = [];
+let titles_bascket       = [];
+let titles_profile       = [];
+let titles_wallet        = [];
+let titles_history       = [];
+let titles_messages      = [];
+let titles_doctor        = [];
+let loading              = 0;
+let home                 = 0;
+let history_order        = 0;
+let search               = 0;
+let locations            = 0;
+let wallet               = 0;
+let bascket              = 0;
+let data                 = {};
+let order_list           = [];
+let pharms_marker        = [];
+let bascket_item_shop_id = 0;
+let active_article;
+let is_open;
+let scrollRight;
+let scrollLeft;
 let user = null;
 let is_adding = 0;
 let user_location;
 let mymap;
 let marker_location;
-let pharms_marker = [];
 let order;
 
 const main_button = target => {
@@ -60,13 +71,15 @@ const main_button = target => {
             });
         });
         $(".main_buttons").removeClass("footer_active");
-        $("li[target=" + target + "]").addClass("footer_active");
+        $(`li[target=${target}]`).addClass("footer_active");
         switch (target) {
             case "home":
                 //$("#home_page_1").fadeIn();
                 if (titles_home.length === 0) titles_home.push("دارسی");
                 if (titles_home.length <= 1) $("#back").css('color', '#8080808c');
                 $("#title_main").text(titles_home[titles_home.length - 1]);
+                get_home_root();
+                shop_id = 100;
                 break;
             case "search":
                 if (titles_search.length === 0) {
@@ -138,6 +151,20 @@ const main_button = target => {
     }
 };
 
+const fill_home_root_item = (data) => {
+    console.log("2", data)
+    $("#home_page_1 .root_item_list").html("");
+    $.each(data, function(index, value) {
+        $("#home_page_1 .root_item_list").append( /*html*/
+            `<li onclick="get_batch_list(${value.id}, '#home_page_2 ul', '${value.name}', 'images/${value.picture}')" class="home_page_1_buttons" title="${value.picture}" target="${value.id}">
+                <p>${value.name}</p>
+                <img alt="image" src="images/${value.picture}">
+            </li>`
+        );
+    });
+    spinner("end");
+};
+
 const toggle_slide_button_in = () => {
     $(".toggle_slide_button").css("transition-timing-function", "cubic-bezier(0.6, -0.28, 0.74, 0.05)");
     $.each($(".toggle_slide_button"), function (index, value) {
@@ -179,26 +206,31 @@ const user_login_send_phone = () => {
             snackbar("شماره تلفن خود را به طور صحیح وارد کنید", "red");
             $("#login_input").focus();
         } else {
-            let send_code = user_login_send_code_to_user(phone);
-            if (send_code.status === "ok") {
-                snackbar(send_code.message, "green");
-                modal_hide();
-                let header = `کد تایید را وارد کنید`;
-                let content = `<input class='cinput cinput-login' id="login_user_code" type="number" onkeydown="if(this.value.length===4 && event.keyCode!==8) return false;" placeholder="کد تایید چهار رقمی"/>`;
-                let footer = `<button onclick='user_login_send_code()' class='cbtn cbtn-login-submit'>ارسال</button>`;
-                let close_able = 1;
-                let delay = 1000;
-                modal_show(header, content, footer, close_able, delay);
-                setTimeout(function () {
-                    $("#login_user_code").focus();
-                }, 500);
-            } else {
-                snackbar(send_code.message, "red");
-                $("#login_input").focus();
-            }
+            console.log(phone)
+            user_login_send_code_to_user(phone);
         }
     }
 };
+
+const result_send_sms = (send_code) => {
+    spinner("end");
+    if (send_code.status === "ok") {
+        snackbar(send_code.message, "green");
+        modal_hide();
+        let header = `کد تایید را وارد کنید`;
+        let content = `<input class='cinput cinput-login' id="login_user_code" type="number" onkeydown="if(this.value.length===4 && event.keyCode!==8) return false;" placeholder="کد تایید چهار رقمی"/>`;
+        let footer = `<button onclick='user_login_send_code()' class='cbtn cbtn-login-submit'>ارسال</button>`;
+        let close_able = 1;
+        let delay = 1000;
+        modal_show(header, content, footer, close_able, delay);
+        setTimeout(function () {
+            $("#login_user_code").focus();
+        }, 500);
+    } else {
+        snackbar(send_code.message, "red");
+        $("#login_input").focus();
+    }
+}
 
 const user_login_send_code = () => {
     let code = $("#login_user_code").val();
@@ -279,7 +311,7 @@ const next_page = title => {
                 history_order++;
                 $("#back").css('color', '#1A7395');
                 break;
-                case "wallet":
+            case "wallet":
                 titles_wallet.push(title);
                 scrollRight = $("#wallet").scrollLeft() + $(".wallet_page").width();
                 $('#wallet').animate({scrollLeft: scrollRight + 'px'}, 600).promise().done(function () {
@@ -383,7 +415,7 @@ const prev_page = () => {
                     $("#back").css('color', '#8080808c');
                 }
                 break;
-                case "wallet":
+            case "wallet":
                 titles_wallet.pop();
                 scrollLeft = $("#wallet").scrollLeft() - $(".wallet_page").width();
                 $('#wallet').animate({scrollLeft: scrollLeft + 'px'}, 600).promise().done(function () {
@@ -407,7 +439,7 @@ const prev_page = () => {
 
 };
 
-const fill_batch_list = (data, target, image) => {
+const fill_batch_list = (data, target, image, title) => {
 
     $(target).html("");
     let target_end;
@@ -416,14 +448,20 @@ const fill_batch_list = (data, target, image) => {
     } else if (target === '#home_page_2 ul') {
         target_end = '#home_page_3 ul';
     }
-    $.each(data, function (index, value) {
-        $(target).append(
-            `<li onclick="get_list_item(1, '${target_end}', '${value.name}')" class="list_batch" title="${value.name}" target=${value.id}>
-                <p>${value.name}</p>
-                <img alt="image" src=${image}>
-            </li>`
-        );
-    });
+    if (data) {
+        $.each(data, function (index, value) {
+            $(target).append(
+                `<li onclick="get_list_item(${value.id}, '${target_end}', '${value.name}')" class="list_batch" title="${value.name}" target=${value.id}>
+                    <p>${value.name}</p>
+                    <img alt="image" src=${image}>
+                </li>`
+            );
+        });
+    } else {
+        $(target).append("<div class='no_item'>!موردی برای نمایش وجود ندارد</div>");
+    }
+    next_page(title);
+    spinner("end");
 };
 
 const show_more_detils = (id) => {
@@ -459,19 +497,19 @@ const show_more_detils = (id) => {
 
     if ($("#"+id).hasClass("hide_detail")) {
         // چون با انیمیشن نمیشه ارتفاع را اوتو کرد من اول ارتفاع رو اوتو میکنم و اندازشو میگیرم و بعد بر میگردونم سر جاش و با انیمیت میبرم به اون ارتفاع
-        let = autoHeight = $("#"+id).css('height', 'auto').height(); $("#"+id).css('height', '125px');
+        let autoHeight = $("#"+id).css('height', 'auto').height(); $("#"+id).css('height', '125px');
         //
         $("#"+id).animate({
             "height": autoHeight
         }, 500).removeClass("hide_detail"); 
         console.log($("#"+id).attr("class"));
-        console.log("#"+id)
+        console.log("#"+id);
     } else {
         $("#"+id).animate({
             "height": "125px"
         }, 500).addClass("hide_detail");
-        console.log($("#"+id).attr("class")) 
-        console.log("hide","#"+id)
+        console.log($("#"+id).attr("class")) ;
+        console.log("hide","#"+id);
     }
     // if ($("#"+id).hasClass("hide_detail")) {
     //     $("#"+id).css({
@@ -493,12 +531,10 @@ const cama_for_digit = (x, symbole = "/") => x.toString().replace(/\B(?=(\d{3})+
 
 const search_function = () => {
     let title = $("#search_product_input").val();
-    let data = search_item(title);
-    console.log(data);
-    next_page(title);
+    search_item(title);
 };
 
-const fill_list_items = (data, target) => {
+const fill_list_items = (data, target, title) => {
     let target_end;
     if (target === '#home_page_3 ul') {
         target_end = '#home_page_4';
@@ -508,59 +544,76 @@ const fill_list_items = (data, target) => {
         target_end = '#search_page_3';
     }
     $(target).html("");
-    $.each(data, function (index, value) {
-        let name = value.name;
-        let description = value.description_short.replace("\\r\\n", "", "g").replace("\r\n", "<br>", "g");
-        let description_normal = value.description_normal.replace("\\r\\n", "", "g").replace("\r\n", "<br>", "g");
-        name = name.split("*")[0];
-        description = description.substring(0, 100);
-        description += '...';
-        let li_id = target.replace(" ", "_").replace("#", "")+index;
-        $(target).append( /*html*/
-            `<li id="${li_id}" class="list_item_li hide_detail" title="${name}" target=${value.id}>
-                <div class="list_item_li_image_names">
-                    <div class="img"> 
-                        <img alt="item" class="item" src="/pictures/${value.image}">
-                    </div>
-                    <div class="names">
-                        <div class="name">${name}</div>
-                        <div class="description">${description}</div>
-                        <div class="functions">
-                            <div class="price"> ${cama_for_digit(value.price)} تومان </div>
-                            <div onclick="show_more_detils('${li_id}')" class="button_description">توضیحات</div>
-                            <div class="plus_mines">
-                                <span class="oprator plus">+</span>
-                                <span class="number">0</span>
-                                <span class="oprator mines">-</span>
+    if (!data) {
+        $(target).html("<div class='no_item'>!موردی برای نمایش وجود ندارد</div>");
+    } else {
+        $.each(data, function (index, value) {
+            let name = value.name; 
+            let data_description = JSON.parse(value.description);
+            console.log(data_description);
+            let description = data_description.short_description.replace("\\r\\n", "", "g").replace("\r\n", "<br>", "g");
+            let description_normal = data_description.description.replace("\\r\\n", "", "g").replace("\r\n", "<br>", "g");
+            name = name.split("*")[0];
+            if (name.length > 30) {
+                name = name.substring(0, 30);
+                name += "...";
+            }
+
+            description = description.substring(0, 100);
+            description += '...';
+            let li_id = target.replace(" ", "_").replace("#", "")+index;
+            $(target).append( /*html*/
+                `<li id="${li_id}" class="list_item_li hide_detail" title="${name}" target=${value.id}>
+                    <div class="list_item_li_image_names">
+                        <div class="img"> 
+                            <img alt="item" class="item" src="/pictures/${(value.id+".jpg")}">
+                        </div>
+                        <div class="names">
+                            <div class="name">${name}</div>
+                            <div class="description">${description}</div>
+                            <div class="functions">
+                                <div class="price"> ${cama_for_digit(value.price)} تومان </div>
+                                <div onclick="show_more_detils('${li_id}')" class="button_description">توضیحات</div>
+                                <div class="plus_mines">
+                                    <span class="oprator plus">+</span>
+                                    <span class="number">0</span>
+                                    <span class="oprator mines">-</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="more_details">
-                    <hr class="more_details_hr">
-                    <div class="description_normal">
-                        ${description_normal} 
+                    <div class="more_details">
+                        <hr class="more_details_hr">
+                        <div class="description_normal">
+                            ${description_normal || "توضیحی برای این محصول وجود ندارد"} 
+                        </div>
+                        <div class="pdf_function">
+                        <a  class="cbtn pdf_function_btn btn_disable"  ><span>دانلود اطلاعات تکمیلی</span><i class="fa fa-download"></i></a>
+                        <a class="cbtn pdf_function_btn btn_disable"><span>نمایش اطلاعات تکمیلی</span><i class="fa fa-eye"></i></a>
+                        </div>
                     </div>
-                    <div class="pdf_function">
-                        <a href="/pictures/${value.description_pdf}" class="cbtn pdf_function_btn" download ><span>دانلود اطلاعات تکمیلی</span><i class="fa fa-download"></i></a>
-                        <a class="cbtn pdf_function_btn" onclick="view_pdf_file('${value.description_pdf}', '${target_end}')"><span>نمایش اطلاعات تکمیلی</span><i class="fa fa-eye"></i></a>
-                    </div>
-                </div>
-			</li>`
-        );
-    });
+                </li>`
+            );
+        });
+    }
+    next_page(title);
+    spinner("end");
+    // <a href="/pictures/${value.id+'.pdf'}" class="cbtn pdf_function_btn btn_disable" download ><span>دانلود اطلاعات تکمیلی</span><i class="fa fa-download"></i></a>
+    // <a class="cbtn pdf_function_btn" onclick="view_pdf_file('${value.id+'.pdf'}', '${target_end}')"><span>نمایش اطلاعات تکمیلی</span><i class="fa fa-eye"></i></a>
 };
 
-const fill_root_item = (data, target) => {
+const fill_root_item = (data, target, title) => {
     $(target).html("");
     $.each(data, function (index, value) {
-        $(target).append( 
-            `<li onclick="get_batch_list(${value.id}, '#locations_page_3 ul', '${value.name}', '${value.image}')" class="locations_page_2_buttons" title=${value.name} target=${value.id}>
+        $(target).append(
+    /*html*/`<li onclick="get_batch_list(${value.id}, '#locations_page_3 ul', '${value.name}', 'images/${value.picture}')" class="locations_page_2_buttons" title=${value.name} target=${value.id}>
 				<p>${value.name}</p>
-				<img alt="img" src=${value.image}>
+				<img alt="img" src="images/${value.picture}">
 			</li>`
         );
     });
+    next_page(title);
+    spinner("end");
 };
 
 const select_address = (data, title, target) => {
@@ -571,21 +624,21 @@ const select_address = (data, title, target) => {
             <button class="cbtn button_function button_go_to_payment" onclick="payment_function(' پرداخت ', '#bascket_page_3')">
                 <span> پرداخت و ثبت سفارش </span><i class="fa fa-2x fa-caret-right"></i>
             </button>
-        </div>`
+        </div>`;
 
-        items = "";
-        $.each(data.items, function (index, value) { 
-            items += /*html*/
-                `<tr>
-					<td>${value.name}</td>
-					<td>${value.price.replace("تومان","")}</td>
-					<td id="${value.id}">
-					    <div class="plus_mines plus_mines_bascket"><span onclick="inc_item(${value.id})" class="oprator plus">+</span><span class="number">${value.count}</span><span onclick="dec_item(${value.id})" class="oprator mines">-</span></div>
-					</td>
-					<td>${cama_for_digit(value.count * parseInt((value.price).replace("/", "")))}</td>
-				</tr>`;
-            main_price += value.count * parseInt((value.price).replace("/", ""));
-        });
+    items = "";
+    $.each(data.items, function (index, value) {
+        items += /*html*/
+            `<tr>
+                <td style="text-align: right">${value.name}</td>
+                <td>${value.price.replace("تومان", "")}</td>
+                <td id="${value.id}">
+                    <div class="plus_mines plus_mines_bascket"><span onclick="inc_item(${value.id})" class="oprator plus">+</span><span class="number">${value.count}</span><span onclick="dec_item(${value.id})" class="oprator mines">-</span></div>
+                </td>
+                <td>${cama_for_digit(value.count * parseInt((value.price).replace("/", "")))}</td>
+            </tr>`;
+        main_price += value.count * parseInt((value.price).replace("/", ""));
+    });
     
     $(target).html( /*html*/
         `<div class="div_view">
@@ -611,10 +664,10 @@ const select_address = (data, title, target) => {
 			</table>
             <hr class="hr_select_address">
             <div class="order_details">
-                <div><span>مالیات:</span><span> &nbsp;${data.vat}&nbsp; تومان</span></div>
-                <div><span>هزینه حمل:</span><span> &nbsp;${data.transport}&nbsp; تومان</span></div>
-                <div><span>تخفیف:</span><span>&nbsp;${data.discount}&nbsp; تومان</span></div>
-                <div><span>استفاده از کیف پول:</span><span>&nbsp;${user.amount_wallet}&nbsp; تومان</span>    <div onclick="turn_on_toggle_button(this)" class="toggle_button off"><span></span></div></div>
+                <div><span style="font-weight:bold;">مالیات:</span><span> &nbsp;${data.vat}&nbsp; تومان</span></div>
+                <div><span style="font-weight:bold;">هزینه حمل:</span><span> &nbsp;${data.transport}&nbsp; تومان</span></div>
+                <div><span style="font-weight:bold;">تخفیف:</span><span>&nbsp;${data.discount}&nbsp; تومان</span></div>
+                <div><span style="font-weight:bold;">استفاده از کیف پول:</span><span>&nbsp;${user.amount_wallet}&nbsp; تومان</span>    <div onclick="turn_on_toggle_button(this)" class="toggle_button off"><span></span></div></div>
             </div>
             <div class="bascket_inputs_select_address"> 
                 <div class="input_select_address">
@@ -637,14 +690,14 @@ const apply_use_wallet = (data) => {
         $(".bascket_header_main_price").text(parseInt($(".bascket_header_main_price").text().replace("/",""))-user.amount_wallet);
         //$(".bascket.header").html(`جمع کل: ${cama_for_digit(main_price-user.amount_wallet)} تومان`);
     }
-}
+};
 
 const apply_dont_use_wallet = (data) => {
     if (data.status === "ok") {
         $(".bascket_header_main_price").text(parseInt($(".bascket_header_main_price").text().replace("/",""))+parseInt(user.amount_wallet));
         //$(".bascket.header").html(`جمع کل: ${cama_for_digit(main_price+user.amount_wallet)} تومان`);
     }
-}
+};
 
 const turn_on_toggle_button = (el) => {
     if ($(el).hasClass("off")) {
@@ -662,7 +715,7 @@ const turn_on_toggle_button = (el) => {
         $(el).addClass("off");
         dont_use_wallet();
     }
-}
+};
 
 const apply_discount = (data) => {
     if (data.status === "ok") {
@@ -670,12 +723,15 @@ const apply_discount = (data) => {
     } else {
         snackbar("کد تخفیف اشتباه است", "red");
     }
-}
+};
 
 const payment_function = (title, target) => {
-    $(target).html("<div class='payment_page'> پرداخت </div>");
+    $(target).html("<div class='payment_page'> در حال انتقال به بانک </div>");
     next_page(title);
-}
+    setTimeout(function() {
+        window.location.replace("https://sep.shaparak.ir/Payment.aspx?Amount=120000&MID=11108164&ResNum=69074&Wage=0&RedirectURL=https://shop.partapp.ir/order/ui/2/index.html");
+    }, 500)
+};
 
 const profile_fill = (user_data, target) => {
     $(target).html("");
@@ -730,21 +786,21 @@ const ready_user_update = (element) => {
         "name": name,
         "gender": gender,
         "birth_day": birth_day
-    }
+    };
     update_user_data(data);
-}
+};
 
 const wallet_fill = (data, target) => {
     // TODO: we are here 
     let invoice = "";
     $.each(data.invoice, function (index,value) {
-        invoice += /*html*/ `<tr>
-                                <td>${parseInt(index)+1}</td>
-                                <td>${value.date}</td>
-                                <td>${value.operator}</td>
-                                <td>${cama_for_digit(value.amount)}</td>
-                                <td>${cama_for_digit(value.inventory)}</td>
-                            </tr>`
+        invoice += `<tr>
+                        <td>${parseInt(index)+1}</td>
+                        <td>${value.date}</td>
+                        <td>${value.operator}</td>
+                        <td>${cama_for_digit(value.amount)}</td>
+                        <td>${cama_for_digit(value.inventory)}</td>
+                    </tr>`;
     });
 
     $(target).html( /*html*/
@@ -779,10 +835,10 @@ const wallet_fill = (data, target) => {
                     <div onclick="select_this_amount_for_sharj(this)" class="amount_wallet_sharj_div"><span class="wallet_sharj_price"> ${cama_for_digit(5000)}    تومان </span><span class="wallet_sharj_radio"></span></div>
                     <div onclick="select_this_amount_for_sharj(this)" class="amount_wallet_sharj_div"><span class="wallet_sharj_price"> ${cama_for_digit(10000)}   تومان </span><span class="wallet_sharj_radio"></span></div>
                     <div onclick="select_this_amount_for_sharj(this)" class="amount_wallet_sharj_div"><span class="wallet_sharj_price"> ${cama_for_digit(20000)}   تومان </span><span class="wallet_sharj_radio"></span></div>
-                    <div onclick="select_this_amount_for_sharj(this)" class="amount_wallet_sharj_div"><span class="wallet_sharj_price"> ${cama_for_digit(50000)}   تومان </span><span class="wallet_sharj_radio"></span></div>
+                    <div onclick=" (this)" class="amount_wallet_sharj_div"><span class="wallet_sharj_price"> ${cama_for_digit(50000)}   تومان </span><span class="wallet_sharj_radio"></span></div>
                     <div onclick="select_this_amount_for_sharj(this)" class="amount_wallet_sharj_div"><span class="wallet_sharj_price"> ${cama_for_digit(100000)}  تومان </span><span class="wallet_sharj_radio"></span></div>
-                    <div onkeydown="select_this_amount_for_sharj(this)" class="amount_wallet_sharj_div_input"><input class="cinput amount_wallet_sharj_input" type="text"></div>
-                    <div   class="amount_wallet_sharj_div_button"><button onclick="pay_amount_wallet()" class="cbtn">پرداخت</button></div>
+                    <div class="amount_wallet_sharj_div_input"><input  onkeydown="select_this_amount_for_sharj_input(this)" class="cinput amount_wallet_sharj_input" type="text"></div>
+                    <div  class="amount_wallet_sharj_div_button"><button onclick="pay_amount_wallet()" class="cbtn">پرداخت</button></div>
                 </div>
             </div>
         </div>`
@@ -790,19 +846,22 @@ const wallet_fill = (data, target) => {
 };
 
 const pay_amount_wallet = () => {
-    $("#wallet_page_2").html(`پرداخت`)
+    $("#wallet_page_2").html(`در حال انتقال به بانک`);
     next_page("شارژ کیف پول");
-}
+    setTimeout(function() {
+        window.location.replace("https://sep.shaparak.ir/Payment.aspx?Amount=120000&MID=11108164&ResNum=69074&Wage=0&RedirectURL=https://shop.partapp.ir/order/ui/2/index.html");
+    }, 500)
+};
 
 const show_invoice = () => {
     $("#invoice").slideToggle();
     $(".wallet_input_radio").slideUp();
-}
+};
 
 const show_wallet_input_radio = () => {
     $(".wallet_input_radio").slideToggle();
     $("#invoice").slideUp();
-}
+};
 
 const select_this_amount_for_sharj = (element) => {
     $(".wallet_sharj_price").css("color","black");
@@ -815,8 +874,16 @@ const select_this_amount_for_sharj = (element) => {
         "background-color":"#025b84",
         "border-color":"#025b84" 
     });
-    $(".amount_wallet_sharj_input").val( $(element).find(".wallet_sharj_price").text().replace("/","").replace("تومان",""))
-}
+    $(".amount_wallet_sharj_input").val( $(element).find(".wallet_sharj_price").text().replace("/","").replace("تومان",""));
+};
+
+const select_this_amount_for_sharj_input = () => {
+    $(".wallet_sharj_price").css("color","black");
+    $(".wallet_sharj_radio").css({
+        "background-color":"white",
+        "border-color":"gray"
+    });
+};
 
 const history_orders_fill = (data, target) => {
     $(target).html("");
@@ -849,7 +916,7 @@ const history_orders_fill_details = (data, target) => {
     let items = '';
     $.each(data.items, function (index, value) {
         items += `<tr>
-                       <td>${value.name}</td>
+                       <td style="text-align: right">${value.name}</td>
                        <td>${cama_for_digit(value.price)}</td>
                        <td>${value.item_count}</td>
                        <td>${cama_for_digit((value.price) * (value.item_count))}</td>
@@ -916,12 +983,12 @@ const repeat_this_order= (order_id) => {
     order_list_count = 0;
     $.each(order_list, function(index, value) {
         order_list_count++;
-    })
+    });
     $(".badget_bascket").text(order_list_count).fadeIn("fast").css('display', 'flex');
     $(".shopping-cart").effect("shake", {
         times: 2
     }, 200);
-}
+};
 
 const check_state_order = (order_id) => {
     let phone_store = get_shop_phone(order_id);
@@ -946,24 +1013,35 @@ const bascket_fill = (order_list) => {
     let items = '';
     let function_div = '';
     if (order_list.length < 1) {
-        items = `<tr><td colspan="4"> سبد خرید خالی است </td></tr>`;
+        items = /*html*/ `<tr><td colspan="4"> سبد خرید خالی است </td></tr>`;
     } else {
         items = "";
-        function_div = `<div class="div_functions">
-                            <button class="cbtn button_function button_select_address" onclick="get_order_complete('انتخاب آدرس', '#bascket_page_2')">
-                                <span>انتخاب آدرس</span><i class="fa fa-2x fa-caret-right"></i>
-                            </button>
-                        </div>`
+        if (shop_id == 110) {
+            function_div = /*html*/
+            `<div class="div_functions">
+                <button class="cbtn button_function button_select_address" onclick="get_order_complete('انتخاب آدرس', '#bascket_page_2')">
+                    <span>انتخاب آدرس</span><i class="fa fa-2x fa-caret-right"></i>
+                </button>
+            </div>`;
+        } else {
+            function_div = /*html*/
+            `<div class="div_functions">
+                <button class="cbtn button_function button_select_address" onclick="get_order_complete('انتخاب آدرس', '#bascket_page_2')">
+                    <span>انتخاب آدرس</span><i class="fa fa-2x fa-caret-right"></i>
+                </button>
+            </div>`;
+        }
+       
         $.each(order_list, function (index, value) { 
             items += /*html*/
-                `<tr>
-					<td>${value.name}</td>
-					<td>${value.price.replace("تومان","")}</td>
-					<td id="${value.id}">
-					    <div class="plus_mines plus_mines_bascket"><span onclick="inc_item(${value.id})" class="oprator plus">+</span><span class="number">${value.count}</span><span onclick="dec_item(${value.id})" class="oprator mines">-</span></div>
-					</td>
-					<td>${cama_for_digit(value.count * parseInt((value.price).replace("/", "")))}</td>
-				</tr>`;
+            `<tr>
+                <td style="text-align: right">${value.name}</td>
+                <td>${value.price.replace("تومان","")}</td>
+                <td id="${value.id}">
+                    <div class="plus_mines plus_mines_bascket"><span onclick="inc_item(${value.id})" class="oprator plus">+</span><span class="number">${value.count}</span><span onclick="dec_item(${value.id})" class="oprator mines">-</span></div>
+                </td>
+                <td>${cama_for_digit(value.count * parseInt((value.price).replace("/", "")))}</td>
+            </tr>`;
             main_price += value.count * parseInt((value.price).replace("/", ""));
         });
     }
@@ -1051,7 +1129,7 @@ $(".main_page").on("click", ".oprator", function () {
                 }, 100);
 
             } else {
-                snackbar(add_to_cart_result.message, "red")
+                snackbar(add_to_cart_result.message, "red");
             }
         } else if ($(this).hasClass("mines")) {
             if (is_adding) {
@@ -1065,7 +1143,7 @@ $(".main_page").on("click", ".oprator", function () {
                             if (order_list[i].count === 0) {
                                 order_list.splice(i, 1);
                             }
-                        }
+                        }  
                     }
                     $(this).prev().text(parseInt($(this).prev().text()) - 1);
                     if ($(this).prev().text() < 0) {
@@ -1083,15 +1161,17 @@ $(".main_page").on("click", ".oprator", function () {
             }
         }
     } else {
-        let item_id;
-        let item_name;
-        let item_price;
         let item_exist = 0;
-        item_id = ($(this).closest("li").attr("target"));
-        item_name = ($(this).closest("li").find(".name").text());
-        item_price = ($(this).closest("li").find(".price").text());
-
+        let item_id    = $(this).closest("li").attr("target");
+        let item_name  = $(this).closest("li").find(".name").text();
+        let item_price = $(this).closest("li").find(".price").text();
         if ($(this).hasClass("plus")) {
+            // if (bascket_item_shop_id) {
+            //     // 
+            // }
+            // if (active_article != "search") {
+            //     // bascket_item_shop_id = shop_id;
+            // }
             let add_to_cart_result = add_to_cart(item_id, "plus");
             if (add_to_cart_result.status === "ok") {
                 $(this).next().text(parseInt($(this).next().text()) + 1);
@@ -1145,11 +1225,11 @@ $(".main_page").on("click", ".oprator", function () {
                         'width': 0,
                         'height': 0
                     }, function () {
-                        $(this).detach()
+                        $(this).detach();
                     });
                 }
             } else {
-                snackbar(add_to_cart_result.message, "red")
+                snackbar(add_to_cart_result.message, "red");
             }
         } else if ($(this).hasClass("mines")) {
             if (is_adding) {
@@ -1183,7 +1263,7 @@ $(".main_page").on("click", ".oprator", function () {
     }
 });
 
-const modal_show = (header = null, content = null, footer = null, close_able = 1, delay = 0) => {
+const modal_show = (header=null, content=null, footer=null, close_able=1, delay=0) => {
     setTimeout(function () {
         $("#modal").fadeIn().promise().done(function () {
             $("#modal_body").animate({"top": "10%"}, 300);
@@ -1195,7 +1275,7 @@ const modal_show = (header = null, content = null, footer = null, close_able = 1
             $("#modal_header").append(
                 `<span id="modal_hide_X" onclick="modal_hide()"><i class="fa fa-times"></i></span>`
             );
-            $("#modal").attr("onclick", "modal_hide()")
+            $("#modal").attr("onclick", "modal_hide()");
         } else {
             $("#modal").attr("onclick", "");
         }
@@ -1251,39 +1331,55 @@ const locations_update_list = (lat = null, long = null) => {
             shadowAnchor: [10, 40], // the same for the shadow
             popupAnchor: [2, -38] // point from which the popup should open relative to the iconAnchor
         });
-        let pharm_icon = L.icon({
-            iconUrl: 'images/location_map.png',
-            // shadowUrl: '../../../../leaflet/marker-shadow.png',
-            iconAnchor: [10, 40], // point of the icon which will correspond to marker's location
-            shadowAnchor: [10, 40], // the same for the shadow
-            popupAnchor: [2, -38] // point from which the popup should open relative to the iconAnchor
-        });
+
         if (marker_location) mymap.removeLayer(marker_location);
         marker_location = L.marker([lat, long], {
             icon: Map_icon
         }).addTo(mymap);
         mymap.panTo(new L.LatLng(lat, long));
-        let pharms = get_around_pharm(lat, long);
+        get_around_pharm(lat, long);
+    } else {
+        $("#list_pharms").html("");
+        $("#list_pharms").append(`<div class="error_get_location">لطفا موقعیت خود را روی نقشه مشخص کنید</div>`);
+    }
+};
+
+const locations_update_list_sub_function = (pharms) => {
+    let pharm_icon = L.icon({
+        iconUrl: 'images/location_map.png',
+        // shadowUrl: '../../../../leaflet/marker-shadow.png',
+        iconAnchor: [10, 40], // point of the icon which will correspond to marker's location
+        shadowAnchor: [10, 40], // the same for the shadow
+        popupAnchor: [2, -38] // point from which the popup should open relative to the iconAnchor
+    })
+    for(i=0;i<pharms_marker.length;i++) {
+        mymap.removeLayer(pharms_marker[i]);
+    } 
+    if (pharms.length) {
         for (let i = 0; i < pharms.length; i++) {
-            let pharm_lat  = pharms[i].location.split(',')[0];
-            let pharm_lang = pharms[i].location.split(',')[1];
+            let pharm_lat  = pharms[i].lat;
+            let pharm_lang = pharms[i].lng;
             let distance   = Math.round(getDistanceFromLatLonInKm(lat, long, pharm_lat, pharm_lang) * 1000);
-            let transport  = Math.round(parseInt(pharms[i].transport_rate * distance) + parseInt(pharms[i].transport_fixed));
-            pharms[i]['distance'] = distance;
-            pharms[i]['transport'] = transport;
+            let transport  = Math.round(parseInt(pharms[i].transport_rate * (distance/1000)) + parseInt(pharms[i].transport_fixed));
+            pharms[i].distance = distance;
+            pharms[i].transport = transport;
             pharms_marker[i] = L.marker([pharm_lat, pharm_lang], {
                 icon: pharm_icon
-            }).addTo(mymap).bindPopup('<span style="font-size:10pt;">' + pharms[i]['name'] + '</span>').on('click', onClick);
+            }).addTo(mymap).bindPopup(`<span style="font-size:10pt;">${pharms[i].name}</span>`).on('click', onClick);
         }
-        let group = new L.featureGroup(pharms_marker);
-        mymap.fitBounds(group.getBounds());
+        // if (pharms_marker) {
+        //     let group = new L.featureGroup(pharms_marker);
+        //     mymap.fitBounds(group.getBounds());
+        // }
+        
         pharms = pharms.sort(compare);
         fill_list_pharm(pharms);
     } else {
         $("#list_pharms").html("");
-        $("#list_pharms").append(`<div class="error_get_location">لطفا موقعیت خود را روی نقشه مشخص کنید</div>`)
+        $("#list_pharms").append(`<div class="error_get_location">موردی برای نمایش وجود ندارد</div>`);    
     }
-};
+    spinner("end");
+}
 
 const errorHandler = () => {
     snackbar("لطفا موقعیت خود را روی نقشه مشخص کنید <br> ،دریافت موقعیت  شما با مشکل مواجه شده است", "red");
@@ -1362,69 +1458,16 @@ const view_pdf_file = (file, target) => {
         </div>`
     );
     next_page("توضیحات تکمیلی");
-}
+};
 
 const download_pdf_file = (file) => {
     window.location = "/pictures/"+file;
+};
+
+const spinner = (what) => {
+    if (what == "start") {
+        $("#darsi_loading").fadeIn("fast");
+    } else if (what == "end") {
+        $("#darsi_loading").fadeOut("slow")
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

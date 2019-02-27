@@ -40,13 +40,18 @@ header {
     justify-content: space-between;
     align-items: center;
     transition: 0.3s;
+    box-shadow: 0px 0px 20px 3px #00000073;
     color: white;
+    z-index: 1;
 }
+
 
 .main_page {
     display: none;
     overflow-x: hidden;
     background: #f3f3f3;
+    justify-content: center;
+    align-items: center;
 }
 
 footer {
@@ -55,7 +60,10 @@ footer {
     width: 100%;
     left: 0;
     bottom: 0;
+    box-shadow: 0px 0px 20px 3px #00000073;
 }
+
+
 
 article {
     height: 82vh;
@@ -64,7 +72,39 @@ article {
     width: 100%;
 
 }
+#darsi_loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh; 
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.3);
+    perspective: 500px; 
+    perspective-origin: center;
+}
+#darsi_loading img {
+    width: 80px;
+    height: auto;
+    animation: rotation 2s infinite linear;
+}
 
+@keyframes rotation {
+    from {
+        -webkit-transform: rotateY(0deg);
+    }
+    to {
+        -webkit-transform: rotateY(359deg);
+    }
+}
+.no_item {
+    width: 100%;
+    text-align: center;
+    margin-top: 10%;
+}
 footer ul {
     display: flex;
     justify-content: space-between;
@@ -143,7 +183,7 @@ footer ul > li {
 }
 
 header div > img {
-    height: 6.7vh;
+    height: 5.7vh;
 }
 
 header div {
@@ -155,6 +195,8 @@ header div {
     align-items: center;
     height: 100%;
     white-space: nowrap;
+    font-size: 16pt;
+    font-weight: 900;
 }
 
 header div:first-child i {
@@ -172,6 +214,7 @@ header div:first-child i {
     align-items: center;
     padding: 0;
     margin: 0;
+    margin-top: 50px;
 }
 
 .root_item_list img {
@@ -190,7 +233,7 @@ header div:first-child i {
     border-radius: 8px;
     max-width: 250px;
     width: 80%;
-    height: 75px;
+    height: 70px;
 }
 
 .home_page, .bascket_page, .search_page, .locations_page,
@@ -216,6 +259,7 @@ header div:first-child i {
     list-style: none;
     margin: 0;
     padding: 0;
+    padding-bottom: 30px;
 }
 
 .list_batch {
@@ -228,9 +272,9 @@ header div:first-child i {
     margin: 20px auto auto;
     background: #1A7395;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1rem;
     max-width: 400px;
-    height: 65px;
+    height: 60px;
     border-radius: 10px;
 }
 
@@ -253,6 +297,7 @@ header div:first-child i {
     color: black;
     height: 125px;
     overflow: hidden;
+    background: white;
 }
 hr.more_details_hr {
     width: 90%;
@@ -277,7 +322,7 @@ hr.more_details_hr {
     margin: 10px auto 0;
 }
 .pdf_function_btn { 
-    background: red !important;
+    background: darkred !important;
     color: white !important;
     font-size: 9pt;
     display: flex;
@@ -305,16 +350,15 @@ hr.more_details_hr {
 }
 
 .list_item_li .img {
-    width: 30%;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 1vw;
+    padding: 2vw;
 }
 
 .list_item_li img {
-    width: 100%;
-    max-width: 110px;
+    height: 100px;
+    width: 70px;
 }
 
 .list_item_li .names {
@@ -338,7 +382,7 @@ hr.more_details_hr {
     justify-content: space-between;
     width: 100%;
     align-items: center;
-    margin-bottom: 8px;
+    margin-top: 8px;
     height: 30px;
 }
 
@@ -353,7 +397,7 @@ hr.more_details_hr {
 }
 
 .list_item_li .names .functions .button_description {
-    border: 1px solid red;
+    border: 1px solid darkred;
     height: 25px;
     display: flex;
     justify-content: center;
@@ -361,7 +405,7 @@ hr.more_details_hr {
     padding: 0 7px;
     border-radius: 5px;
     color: white;
-    background: red;
+    background: darkred;
     font-size: 9pt;
 }
 
@@ -382,9 +426,9 @@ hr.more_details_hr {
 }
 
  .plus_mines .oprator {
-    border: 1px solid red;
+    border: 1px solid darkred;
     color: white;
-    background: red;
+    background: darkred;
     height: 25px;
     display: flex;
     justify-content: center;
@@ -395,12 +439,14 @@ hr.more_details_hr {
 }
 
  .plus_mines .number {
-    color: red;
-    font-size: 20pt;
+    color: darkred;
+    font-size: 15pt;
     display: flex;
     justify-content: center;
     align-items: center;
     width: 40%;
+    font-weight: bold;
+
 }
 
 .plus_mines_bascket .oprator{
@@ -469,6 +515,7 @@ div#map {
     text-align: center;
     color: black;
     font-size: 10pt;
+    padding-top: 5px;
 }
 .bascket_table th {
     text-align: center;
@@ -525,6 +572,9 @@ div#map {
     width: 80%;
     margin: 10px auto;
     direction: rtl;
+    border: 1px solid gray;
+    width: 85%;
+    padding: 5%;
 }
 
 .wallet {
@@ -543,6 +593,7 @@ div#map {
     width: 100%;
     font-size: 16pt;
     direction: rtl;
+    margin-top: 35px;
 }
 
 .wallet_amount p {
@@ -738,7 +789,7 @@ div#map {
     width: 22px;
     height: 22px;
     color: white;
-    background: red;
+    background: darkred;
     -webkit-border-radius: 50%;
     -moz-border-radius: 50%;
     border-radius: 50%;
@@ -962,6 +1013,7 @@ div#map {
     width: 100%;
     outline: none;
     font-size: 12pt;
+    height: 30px;
 }
 #search_prduct {
     width: 80%;
@@ -1016,25 +1068,29 @@ div#map {
     color: gray;
 }
 .button_select_address {
-    background: red;
+    background: darkred;
     font-size: 10pt;
     color: white;
     width: 100px;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     align-items: center;
     border: none;
+    padding: 4px 2px;
+    box-sizing: initial;
 }
 .button_go_to_payment {
-    background: red;
+    background: darkred;
     font-size: 10pt;
     color: white;
     width: 140px;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     align-items: center;
     border: none;
     white-space: nowrap;
+    padding: 4px 2px;
+    box-sizing: initial;
 }
 .payment_page {
     width: 100%;
@@ -1135,14 +1191,16 @@ div#map {
     display: flex;
 }
 .profile_uodate_button {
-    background: red;
+    background: darkred;
     font-size: 10pt;
     color: white;
     width: 100px;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     align-items: center;
     border: none;
+    padding: 4px 2px;
+    box-sizing: initial;
 }
 .change_able {
     text-decoration: underline;
@@ -1198,4 +1256,16 @@ span.wallet_sharj_radio {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+.btn_disable {
+    background-color: silver !important;
+}
+table.bascket_table td {
+    border-bottom: 1px solid silver;
+    padding-bottom: 5px;
+}
+.pharm_listed span {
+    direction: rtl;
+    white-space: nowrap;
+    font-size: 12pt;
 }
