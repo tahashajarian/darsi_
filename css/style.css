@@ -195,7 +195,7 @@ header div {
     align-items: center;
     height: 100%;
     white-space: nowrap;
-    font-size: 16pt;
+    font-size: 15pt;
     font-weight: 900;
 }
 
@@ -214,7 +214,7 @@ header div:first-child i {
     align-items: center;
     padding: 0;
     margin: 0;
-    margin-top: 50px;
+    padding-top: 50px;
 }
 
 .root_item_list img {
@@ -276,11 +276,16 @@ header div:first-child i {
     max-width: 400px;
     height: 60px;
     border-radius: 10px;
+    box-shadow: 3px 3px 5px 0px rgba(0,0,0,.4);
 }
 
 .list_batch img {
     width: 30px;
 }
+.list_batch p {
+    text-align: right;
+}
+
 
 .list_item {
     list-style: none;
@@ -309,7 +314,7 @@ hr.more_details_hr {
     align-items: center;
     flex-direction: column;
     padding: 10px;
-    text-align: center;
+    text-align: right;
     width: 100%;
     padding-top: 0;
 }
@@ -375,6 +380,9 @@ hr.more_details_hr {
     text-align: right;
     direction: rtl;
 }
+.description { 
+    min-height: 40px;
+}
 
 .list_item_li .names .functions {
     display: flex;
@@ -389,11 +397,14 @@ hr.more_details_hr {
 .list_item_li .names .name {
     font-weight: bolder;
     text-align: right;
-    white-space: nowrap;
+    white-space: normal;
     text-overflow: ellipsis;
     width: 100%;
     overflow: hidden;
     margin: 6px 0;
+    font-size: 10pt;
+    margin-bottom: 0;
+    min-height: 28px;
 }
 
 .list_item_li .names .functions .button_description {
@@ -459,7 +470,6 @@ hr.more_details_hr {
     font-size: 12pt;
     width: 30%;
 }
-
 
 #search_page_1 {
     display: flex;
@@ -577,14 +587,14 @@ div#map {
     padding: 5%;
 }
 
-.wallet {
-    /* display: flex;
+/* .wallet {
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-evenly;
-    height: 100%; */
-}
-
+    height: 100%;
+} 
+ */
 .wallet_amount {
     display: flex;
     flex-direction: column;
@@ -1240,9 +1250,9 @@ span.wallet_sharj_radio {
     position: absolute;
     right: 10px;
 }
-.wallet_sharj_price {
+/* .wallet_sharj_price {
     
-}
+} */
 .amount_wallet_sharj_input {
     width: 60%;
     height: 30px;
@@ -1268,4 +1278,7 @@ table.bascket_table td {
     direction: rtl;
     white-space: nowrap;
     font-size: 12pt;
+}
+.history_details_table_more_span {
+    font-weight: bold;
 }

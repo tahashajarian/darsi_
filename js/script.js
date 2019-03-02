@@ -11,14 +11,13 @@ $(document).ready(function () {
     window.top.postMessage('1', '*');
     window.frames.postMessage('1', '*');
     console.log(user_location);
-    mymap = L.map('map').setView([35.699695, 51.338349], 11);
+    mymap = L.map('map').setView([35.699695, 51.338349], 14);
     L.tileLayer(
         'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic2hhamFyaWFudGFoYSIsImEiOiJjamo5M2lrbWoxN25jM2ttbTBjMjBtbTFkIn0.g60dHXBYeKkRhhrvTOSuxg', {
             maxZoom: 18,
             id: 'mapbox.streets',
             accessToken: 'pk.eyJ1Ijoic2hhamFyaWFudGFoYSIsImEiOiJjamo5M2lrbWoxN25jM2ttbTBjMjBtbTFkIn0.g60dHXBYeKkRhhrvTOSuxg'
-        }).addTo(mymap);
-
+    }).addTo(mymap);
     L.easyButton('<i onclick="user_get_location()" class="fa fa-crosshairs"></i>', function () {
     }).addTo(mymap);
     spinner("end");
@@ -47,6 +46,7 @@ let data                 = {};
 let order_list           = [];
 let pharms_marker        = [];
 let bascket_item_shop_id = 0;
+let order_id             = 0;
 let active_article;
 let is_open;
 let scrollRight;
@@ -131,6 +131,7 @@ const main_button = target => {
             case "messages":
                 if (titles_messages.length === 0) {
                     titles_messages.push("پیام رسانی");
+                    messages();
                 }
                 if (titles_messages.length <= 1) $("#back").css('color', '#8080808c');
                 $("#title_main").text(titles_messages[titles_messages.length - 1]);
@@ -152,7 +153,7 @@ const main_button = target => {
 };
 
 const fill_home_root_item = (data) => {
-    console.log("2", data)
+    console.log("2", data);
     $("#home_page_1 .root_item_list").html("");
     $.each(data, function(index, value) {
         $("#home_page_1 .root_item_list").append( /*html*/
@@ -206,7 +207,7 @@ const user_login_send_phone = () => {
             snackbar("شماره تلفن خود را به طور صحیح وارد کنید", "red");
             $("#login_input").focus();
         } else {
-            console.log(phone)
+            console.log(phone);
             user_login_send_code_to_user(phone);
         }
     }
@@ -230,7 +231,7 @@ const result_send_sms = (send_code) => {
         snackbar(send_code.message, "red");
         $("#login_input").focus();
     }
-}
+};
 
 const user_login_send_code = () => {
     let code = $("#login_user_code").val();
@@ -258,8 +259,8 @@ const user_login_send_code = () => {
 };
 
 const next_page = title => {
-    if (title.length > 40) {
-        title = title.substring(0, 40);
+    if (title.length > 25) {
+        title = title.substring(0, 25);
         title += '...';
     }
     $("#title_main").text(title);
@@ -546,31 +547,35 @@ const fill_list_items = (data, target, title) => {
     $(target).html("");
     if (!data) {
         $(target).html("<div class='no_item'>!موردی برای نمایش وجود ندارد</div>");
-    } else {
+    } else { 
         $.each(data, function (index, value) {
             let name = value.name; 
-            let data_description = JSON.parse(value.description);
-            console.log(data_description);
-            let description = data_description.short_description.replace("\\r\\n", "", "g").replace("\r\n", "<br>", "g");
-            let description_normal = data_description.description.replace("\\r\\n", "", "g").replace("\r\n", "<br>", "g");
-            name = name.split("*")[0];
-            if (name.length > 30) {
-                name = name.substring(0, 30);
-                name += "...";
-            }
+            data_description = JSON.parse(value.description);
+            console.log("IRC=> ", data_description.IRC);
+            short_description = data_description.short_description;
+            description        = data_description.description;
+            
+            name_farsi = name.split("*")[0];
+            name_english = name.split("*")[1];
+            // if (name.length > 22) {
+            //     name = name.substring(0, 22);
+            //     name += "...";
+            // }
 
-            description = description.substring(0, 100);
-            description += '...';
+            // if (short_description) {
+            //     short_description = short_description.substring(0, 100);
+            //     short_description += '...';
+            // }
             let li_id = target.replace(" ", "_").replace("#", "")+index;
             $(target).append( /*html*/
-                `<li id="${li_id}" class="list_item_li hide_detail" title="${name}" target=${value.id}>
+                `<li id="${li_id}" class="list_item_li hide_detail" title="${name_farsi}" target=${value.id}>
                     <div class="list_item_li_image_names">
                         <div class="img"> 
-                            <img alt="item" class="item" src="/pictures/${(value.id+".jpg")}">
+                            <img onerror="replace_default_image(this)" alt="item" class="item" src="/pictures/${(value.picture_id+".jpg")}">
                         </div>
                         <div class="names">
-                            <div class="name">${name}</div>
-                            <div class="description">${description}</div>
+                            <div class="name">${name_farsi}</div>
+                            <div class="name"> ${name_english || "-"} </div>
                             <div class="functions">
                                 <div class="price"> ${cama_for_digit(value.price)} تومان </div>
                                 <div onclick="show_more_detils('${li_id}')" class="button_description">توضیحات</div>
@@ -585,7 +590,8 @@ const fill_list_items = (data, target, title) => {
                     <div class="more_details">
                         <hr class="more_details_hr">
                         <div class="description_normal">
-                            ${description_normal || "توضیحی برای این محصول وجود ندارد"} 
+                            ${short_description} <hr>
+                            ${description || "توضیحی برای این محصول وجود ندارد"} 
                         </div>
                         <div class="pdf_function">
                         <a  class="cbtn pdf_function_btn btn_disable"  ><span>دانلود اطلاعات تکمیلی</span><i class="fa fa-download"></i></a>
@@ -600,6 +606,10 @@ const fill_list_items = (data, target, title) => {
     spinner("end");
     // <a href="/pictures/${value.id+'.pdf'}" class="cbtn pdf_function_btn btn_disable" download ><span>دانلود اطلاعات تکمیلی</span><i class="fa fa-download"></i></a>
     // <a class="cbtn pdf_function_btn" onclick="view_pdf_file('${value.id+'.pdf'}', '${target_end}')"><span>نمایش اطلاعات تکمیلی</span><i class="fa fa-eye"></i></a>
+};
+
+const replace_default_image = (element) => {
+    $(element).attr("src", "/pictures/default_image.png");
 };
 
 const fill_root_item = (data, target, title) => {
@@ -730,13 +740,25 @@ const payment_function = (title, target) => {
     next_page(title);
     setTimeout(function() {
         window.location.replace("https://sep.shaparak.ir/Payment.aspx?Amount=120000&MID=11108164&ResNum=69074&Wage=0&RedirectURL=https://shop.partapp.ir/order/ui/2/index.html");
-    }, 500)
+    }, 500);
 };
 
 const profile_fill = (user_data, target) => {
     $(target).html("");
     console.log("profile_fill", user_data);
+
     if (user_data) {
+        switch (user_data.gender) {
+            case 1:
+                gender = "مرد";
+                break;
+            case 2:
+                gender = "زن";
+                break;
+            default:
+                gender = "نامشخص";
+                break;
+        }
         $(target).html( /*html*/
             `<div class="div_view">
                 <div class='profile' class='profile_photo'>
@@ -850,7 +872,7 @@ const pay_amount_wallet = () => {
     next_page("شارژ کیف پول");
     setTimeout(function() {
         window.location.replace("https://sep.shaparak.ir/Payment.aspx?Amount=120000&MID=11108164&ResNum=69074&Wage=0&RedirectURL=https://shop.partapp.ir/order/ui/2/index.html");
-    }, 500)
+    }, 500);
 };
 
 const show_invoice = () => {
@@ -947,20 +969,20 @@ const history_orders_fill_details = (data, target) => {
             <hr class="hr_history">
 			<table class='history_details_table_more'>
 				<tr>
-					<td>شماره سفارش: ${data.order_id}</td>
-					<td>زمان ازسال: ${data.date}</td>
+					<td> <span class="history_details_table_more_span">شماره سفارش: </span> ${data.order_id}</td>
+					<td> <span class="history_details_table_more_span"> زمان ارسال: </span> ${data.date}</td>
 				</tr>
 				<tr>
-					<td> مالیات: ${cama_for_digit(data.vat)}</td>
-					<td> هزینه حمل: ${cama_for_digit(data.transport)}</td>
+					<td> <span class="history_details_table_more_span"> مالیات: </span> ${cama_for_digit(data.vat)}</td>
+					<td> <span class="history_details_table_more_span"> هزینه حمل: </span> ${cama_for_digit(data.transport)}</td>
 				</tr>
 				<tr>
-					<td> استفاده از کیف پول: ${cama_for_digit(data.wallet)}</td>
-					<td> تخفیف: ${cama_for_digit(data.discount)}</td>
+					<td> <span class="history_details_table_more_span"> استفاده از کیف پول: </span> ${cama_for_digit(data.wallet)}</td>
+					<td> <span class="history_details_table_more_span"> تخفیف: </span> ${cama_for_digit(data.discount)}</td>
 				</tr>
 				<tr>
-					<td> وضعیت سفارش: ${data.status}</td>
-					<td> وضعیت پرداخت: ${data.payment}</td>
+					<td> <span class="history_details_table_more_span"> وضعیت سفارش: </span> ${data.status}</td>
+					<td> <span class="history_details_table_more_span"> وضعیت پرداخت: </span> ${data.payment}</td>
 				</tr>
 		    </table>
 			    <p class="history_details_more_address"><i style="color: #00899a" class="fa fa-map"></i> &nbsp;  آدرس:   ${data.address} </p>
@@ -993,6 +1015,23 @@ const repeat_this_order= (order_id) => {
 const check_state_order = (order_id) => {
     let phone_store = get_shop_phone(order_id);
     $("#history_page_3").html( /*html*/
+        `<div class="peygrir">
+            <div class="peygiri_icon_call">
+                <a href="tel:${phone_store.data.tel}"><i class="fab fa-whatsapp"></i></a>
+            </div>
+            <div class="peygrir_textarea_div">
+                <textarea></textarea>
+                <button>ارسال</button>
+            </div>
+        </div>`
+    );
+    console.log(order_id);
+    next_page("پیگیری سفارش");
+};
+
+const messages = () => {
+    let phone_store = get_shop_phone(order_id);
+    $("#messages_page_1").html( /*html*/
         `<div class="peygrir">
             <div class="peygiri_icon_call">
                 <a href="tel:${phone_store.data.tel}"><i class="fab fa-whatsapp"></i></a>
@@ -1293,8 +1332,8 @@ const modal_hide = () => {
 };
 
 const location_map = () => {
-    locations_update_list();
     user_get_location();
+    locations_update_list();
     mymap.on('click', onMapClick);
     setTimeout(function () {
         mymap.invalidateSize();
@@ -1344,17 +1383,19 @@ const locations_update_list = (lat = null, long = null) => {
     }
 };
 
-const locations_update_list_sub_function = (pharms) => {
+const locations_update_list_sub_function = (pharms, lat=35.5865586, long=51.7586203) => {
     let pharm_icon = L.icon({
         iconUrl: 'images/location_map.png',
         // shadowUrl: '../../../../leaflet/marker-shadow.png',
         iconAnchor: [10, 40], // point of the icon which will correspond to marker's location
         shadowAnchor: [10, 40], // the same for the shadow
         popupAnchor: [2, -38] // point from which the popup should open relative to the iconAnchor
-    })
+    });
     for(i=0;i<pharms_marker.length;i++) {
         mymap.removeLayer(pharms_marker[i]);
-    } 
+    }
+    // if (!lat) lat = 35.5865586;
+    // if (!long) long = 51.7586203;
     if (pharms.length) {
         for (let i = 0; i < pharms.length; i++) {
             let pharm_lat  = pharms[i].lat;
@@ -1379,7 +1420,7 @@ const locations_update_list_sub_function = (pharms) => {
         $("#list_pharms").append(`<div class="error_get_location">موردی برای نمایش وجود ندارد</div>`);    
     }
     spinner("end");
-}
+};
 
 const errorHandler = () => {
     snackbar("لطفا موقعیت خود را روی نقشه مشخص کنید <br> ،دریافت موقعیت  شما با مشکل مواجه شده است", "red");
@@ -1422,15 +1463,16 @@ const fill_list_pharm = (pharms) => {
             `<div class="pharm_listed" onClick="get_root_item(${value.id}, '#locations_page_2 ul', '${value.name}')">
                  <div class="pharm_name_distance">
                     <span>${value.name}</span>
-                    <span> ${value.distance} <span>متر</span>  </span>
+                    <span> ${value.distance-(value.distance%10)} <span>متر</span>  </span>
                  </div>
                  <div class="pharm_transport">
                     <span>هزینه حمل:</span>
-                    <span> ${cama_for_digit(value.transport)}  <span>تومان</span>  </span>
+                    <span> ${cama_for_digit(Math.round(value.transport-(value.transport%500)))}  <span>تومان</span>  </span>
                  </div>
             </div>`
         );
     });
+    // <span> ${value.distance-(value.distance%50)} <span>متر</span>  </span>
 };
 
 const onClick = function () {
@@ -1468,6 +1510,6 @@ const spinner = (what) => {
     if (what == "start") {
         $("#darsi_loading").fadeIn("fast");
     } else if (what == "end") {
-        $("#darsi_loading").fadeOut("slow")
+        $("#darsi_loading").fadeOut("slow");
     }
-}
+};

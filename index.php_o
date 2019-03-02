@@ -22,7 +22,6 @@
     <article class="main_page" id="home">
         <div class="home_page" id="home_page_1">
             <ul class="root_item_list">
-
             </ul>
         </div>
         <div class="home_page" id="home_page_2">
@@ -36,10 +35,8 @@
             </ul>
         </div>
         <div class="home_page" id="home_page_4">
-            
         </div>
         <div class="home_page" id="home_page_5">
-
         </div>
     </article>
     <article class="main_page" id="search">
@@ -93,8 +90,6 @@
         </div>
         <div class="bascket_page" id="bascket_page_3">
         </div>
-        <div class="bascket_page" id="bascket_page_4">
-        </div>
     </article>
     <article class="main_page" id="profile">
         <div class="profile_page" id="profile_page_1">
@@ -104,7 +99,6 @@
         <div class="wallet_page" id="wallet_page_1">
         </div>
         <div class="wallet_page" id="wallet_page_2">
-
         </div>
     </article>
     <article class="main_page" id="history_order">
@@ -134,12 +128,10 @@
         </div>
         <div class="history_page" id="history_page_3">
 
-        </div> 
+        </div>
     </article>
-    <article class="main_page" id="messages">
-        <div class="messages_page" id="messages_page_1"></div>
-    </article>
-    <article class="main_page" id="doctor"><p class="no_item">!درحال حاضر بخش مشاوره غیر فعال است</p></article>
+    <article class="main_page" id="messages">پیام رسانی</article>
+    <article class="main_page" id="doctor">doctor</article>
     <!--  Modal  -->
     <div id="modal">
         <div id="modal_body" onclick="event.stopPropagation();">
@@ -149,13 +141,6 @@
         </div>
     </div>
     <!--  /Modal  -->
-    <!-- spinner -->
-    <div id="darsi_loading">
-        <div class="spinner">
-            <img src="images/main_logo.png" alt="">
-        </div>
-    </div>
-    <!-- /spinner -->
     <footer>
         <ul>
             <li onclick="main_button('home')" target="home" title="دارسی" class="footer_active main_buttons">

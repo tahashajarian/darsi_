@@ -43,7 +43,7 @@ const get_list_item = (id, target, title) => {
         console.log("3", data);
         data = data.data;
         fill_list_items(data, target, title);
-    });
+    }, "json");
     // let data = {
     //     1: {
     //         "name": "آمین وی  4600 شکلاتی® قرص 243 عددی * AMIN WHEY 4600 CHOCOLATE® TAB 243",
@@ -229,7 +229,7 @@ const history_order_get_details = order_id => {
     let data = {
         "main_price": "240000",
         "items": {
-            1: {
+            1: { 
             "name":"فروگلوبین ویتابیوتیکس",
             "item_count":"2",
             "price":"120000",
@@ -241,13 +241,13 @@ const history_order_get_details = order_id => {
             }
         },
         "order_id": "545421",
-        "date": "1514614231321",
+        "date": "8/12/1397",
         "vat": "0",
         "transport": "0",
         "wallet": "13000",
         "discount": "2000",
-        "status": "1",
-        "payment": "1",
+        "status": "پایان یافنه",
+        "payment": "پرداخت شده",
         "address": "میدان مادر نبش مددکاران حیابان مددکاران پلاک 26 واحد 2"
     };
     history_orders_fill_details(data, "#history_page_2");
@@ -365,7 +365,7 @@ const user_login_send_code_to_user = (phone) => {
         "phone"  : phone
     }, function(data) {
         console.log("send", data);
-        result_send_sms(data)
+        result_send_sms(data);
     });
     // let data = {
     //    "status": "ok",
@@ -446,8 +446,8 @@ const get_around_pharm = (lat, long) => {
         "lat": lat,
         "lng": long
      }, function (data) {
-        console.log('location_mehrasghad', data)
-        locations_update_list_sub_function(data);
+        console.log('location_mehrasghad', data);
+        locations_update_list_sub_function(data, lat, long);
      });
     // let data = [
     //     {
