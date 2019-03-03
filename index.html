@@ -1,6 +1,5 @@
 <!-- any page divided to two part: div_view and div_function div_view: 85% and divc_function 15% -->
 <!doctype html>
-<!-- mehrshad test git -->
 <html lang="fa">
 <head>
     <meta charset="utf-8">
@@ -12,7 +11,7 @@
     <link rel="stylesheet" type="text/css" href="../../../leaflet/leaflet.css" />
     <link rel="stylesheet" href="../../css/easy-button.css">
 </head>
-<body touch-action="none">
+<body>
     <header id="header">
         <div id="back" onclick="prev_page()">
             <i class="fa fa-arrow-alt-circle-left"></i>
@@ -168,7 +167,7 @@
             <li onclick="main_button('locations')" target="locations" title="داروخانه ها" class="main_buttons">
                 <img alt="image" src="images/location.png"/>
             </li>
-            <li onclick="main_button('bascket')" target="bascket" title="سبد خرید" class="main_buttons bascket_li">
+            <li style="z-index: 10;" onclick="main_button('bascket')" target="bascket" title="سبد خرید" class="main_buttons bascket_li">
                 <span data-badget="0" class="badget badget_bascket"> 0 </span>
                 <img alt="image" class="shopping-cart" src="images/cart.png"/>
             </li>

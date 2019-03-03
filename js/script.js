@@ -2,61 +2,31 @@
 
 
 $(document).ready(function () {
-    console.log("referer => ",document.referrer);
-    if (document.referrer ==  "https://sep.shaparak.ir/Payment.aspx?Amount=120000&MID=11108164&ResNum=69074&Wage=0&RedirectURL=https%3a%2f%2fshop.partapp.ir%2forder%2fui%2f2%2findex.html") {
+    console.log("referer => ", document.referrer);
+    if (document.referrer == "https://sep.shaparak.ir/Payment.aspx?Amount=120000&MID=11108164&ResNum=69074&Wage=0&RedirectURL=https%3a%2f%2fshop.partapp.ir%2forder%2fui%2f2%2findex.html") {
         snackbar("!پرداخت ناموفق بود");
     }
     main_button("home");
     window.parent.postMessage('1', '*');
     window.top.postMessage('1', '*');
     window.frames.postMessage('1', '*');
-    console.log(user_location);
     mymap = L.map('map').setView([35.699695, 51.338349], 14);
     L.tileLayer(
         'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic2hhamFyaWFudGFoYSIsImEiOiJjamo5M2lrbWoxN25jM2ttbTBjMjBtbTFkIn0.g60dHXBYeKkRhhrvTOSuxg', {
             maxZoom: 18,
             id: 'mapbox.streets',
             accessToken: 'pk.eyJ1Ijoic2hhamFyaWFudGFoYSIsImEiOiJjamo5M2lrbWoxN25jM2ttbTBjMjBtbTFkIn0.g60dHXBYeKkRhhrvTOSuxg'
-    }).addTo(mymap);
+        }).addTo(mymap);
     L.easyButton('<i onclick="user_get_location()" class="fa fa-crosshairs"></i>', function () {
     }).addTo(mymap);
     spinner("end");
+    user_get_location();
+    get_user();
 });
-    
+
+
 // define variable    
-let user_id              = 3590;
-let shop_id              = 110;
-let titles_home          = [];
-let titles_search        = [];
-let titles_locations     = [];
-let titles_bascket       = [];
-let titles_profile       = [];
-let titles_wallet        = [];
-let titles_history       = [];
-let titles_messages      = [];
-let titles_doctor        = [];
-let loading              = 0;
-let home                 = 0;
-let history_order        = 0;
-let search               = 0;
-let locations            = 0;
-let wallet               = 0;
-let bascket              = 0;
-let data                 = {};
-let order_list           = [];
-let pharms_marker        = [];
-let bascket_item_shop_id = 0;
-let order_id             = 0;
-let active_article;
-let is_open;
-let scrollRight;
-let scrollLeft;
-let user = null;
-let is_adding = 0;
-let user_location;
-let mymap;
-let marker_location;
-let order;
+let lat; let long; let locations = 0; let user_id = 3590; let shop_id = 110; let titles_home = []; let titles_search = []; let titles_locations = []; let titles_bascket = []; let titles_profile = []; let titles_wallet = []; let titles_history = []; let titles_messages = []; let titles_doctor = []; let loading = 0; let home = 0; let history_order = 0; let search = 0; let user_location = {latitude: "35.5865586", longitude: "51.7586203"}; let wallet = 0; let bascket = 0; let data = {}; let order_list = []; let pharms_marker = []; let bascket_item_shop_id = 0; let order_id = 0; let active_article; let is_open; let scrollRight; let scrollLeft; let user = null; let is_adding = 0; let mymap; let marker_location; let order;
 
 const main_button = target => {
     if (!loading) {
@@ -155,7 +125,7 @@ const main_button = target => {
 const fill_home_root_item = (data) => {
     console.log("2", data);
     $("#home_page_1 .root_item_list").html("");
-    $.each(data, function(index, value) {
+    $.each(data, function (index, value) {
         $("#home_page_1 .root_item_list").append( /*html*/
             `<li onclick="get_batch_list(${value.id}, '#home_page_2 ul', '${value.name}', 'images/${value.picture}')" class="home_page_1_buttons" title="${value.picture}" target="${value.id}">
                 <p>${value.name}</p>
@@ -208,7 +178,7 @@ const user_login_send_phone = () => {
             $("#login_input").focus();
         } else {
             console.log(phone);
-            user_login_send_code_to_user(phone);
+            user_login_send_code_to_user(phone, JSON.stringify(user_location));
         }
     }
 };
@@ -221,14 +191,14 @@ const result_send_sms = (send_code) => {
         let header = `کد تایید را وارد کنید`;
         let content = `<input class='cinput cinput-login' id="login_user_code" type="number" onkeydown="if(this.value.length===4 && event.keyCode!==8) return false;" placeholder="کد تایید چهار رقمی"/>`;
         let footer = `<button onclick='user_login_send_code()' class='cbtn cbtn-login-submit'>ارسال</button>`;
-        let close_able = 1;
+        let close_able = 0;
         let delay = 1000;
         modal_show(header, content, footer, close_able, delay);
         setTimeout(function () {
             $("#login_user_code").focus();
-        }, 500);
+        }, 1200);
     } else {
-        snackbar(send_code.message, "red");
+        snackbar(send_code.message, "red"); 
         $("#login_input").focus();
     }
 };
@@ -238,23 +208,34 @@ const user_login_send_code = () => {
     if (!code) {
         snackbar(" کد دریافتی خود را وارد کنید", "red");
         $("#login_user_code").focus();
+
     } else {
         if (code.length < 4) {
             snackbar(" کد صحیح نیست", "red");
             $("#login_user_code").focus();
+            console.log("چیزی که وارد کردی به درد نمیخوره");
         } else {
-            let validate_code = user_login_verify_code(code);
-            if (validate_code.status === "ok") {
-                modal_hide();
-                user = validate_code.data;
-                let name_user = user.name;
-                snackbar(`${name_user} گرامی خوش آمدید `, "green");
-                profile_fill(user, "#profile_page_1");
-            } else {
-                snackbar(" کد صحیح نیست", "red");
-                $("#login_user_code").focus();
-            }
+            console.log("چیزی که وارد کردی به خوبه");
+            user_login_verify_code(code);
         }
+    }
+};
+
+const result_user_login_verify_code = (data) => {
+    spinner('end');
+    if (data.status === "ok") {
+        modal_hide();
+        user = data.data;
+        let name_user = user.name;
+        if (name_user.length > 1) {
+            snackbar(`${name_user} گرامی خوش آمدید `, "green");
+            profile_fill(user, "#profile_page_1");
+        } else {
+            modal_update_user_name();
+        }
+    } else {
+        snackbar(" کد صحیح نیست", "red");
+        $("#login_user_code").focus();
     }
 };
 
@@ -270,7 +251,7 @@ const next_page = title => {
             case "home":
                 titles_home.push(title);
                 scrollRight = $("#home").scrollLeft() + $(".home_page").width();
-                $('#home').animate({scrollLeft: scrollRight + 'px'}, 600).promise().done(function () {
+                $('#home').animate({ scrollLeft: scrollRight + 'px' }, 200).promise().done(function () {
                     loading = 0;
                 });
                 home++;
@@ -279,7 +260,7 @@ const next_page = title => {
             case "search":
                 titles_search.push(title);
                 scrollRight = $("#search").scrollLeft() + $(".search_page").width();
-                $('#search').animate({scrollLeft: scrollRight + 'px'}, 600).promise().done(function () {
+                $('#search').animate({ scrollLeft: scrollRight + 'px' }, 200).promise().done(function () {
                     loading = 0;
                 });
                 search++;
@@ -288,7 +269,7 @@ const next_page = title => {
             case "locations":
                 titles_locations.push(title);
                 scrollRight = $("#locations").scrollLeft() + $(".locations_page").width();
-                $('#locations').animate({scrollLeft: scrollRight + 'px'}, 600).promise().done(function () {
+                $('#locations').animate({ scrollLeft: scrollRight + 'px' }, 200).promise().done(function () {
                     loading = 0;
                 });
                 locations++;
@@ -297,7 +278,7 @@ const next_page = title => {
             case "bascket":
                 titles_bascket.push(title);
                 scrollRight = $("#bascket").scrollLeft() + $(".bascket_page").width();
-                $('#bascket').animate({scrollLeft: scrollRight + 'px'}, 600).promise().done(function () {
+                $('#bascket').animate({ scrollLeft: scrollRight + 'px' }, 200).promise().done(function () {
                     loading = 0;
                 });
                 bascket++;
@@ -306,7 +287,7 @@ const next_page = title => {
             case "history_order":
                 titles_history.push(title);
                 scrollRight = $("#history_order").scrollLeft() + $(".history_page").width();
-                $('#history_order').animate({scrollLeft: scrollRight + 'px'}, 600).promise().done(function () {
+                $('#history_order').animate({ scrollLeft: scrollRight + 'px' }, 200).promise().done(function () {
                     loading = 0;
                 });
                 history_order++;
@@ -315,7 +296,7 @@ const next_page = title => {
             case "wallet":
                 titles_wallet.push(title);
                 scrollRight = $("#wallet").scrollLeft() + $(".wallet_page").width();
-                $('#wallet').animate({scrollLeft: scrollRight + 'px'}, 600).promise().done(function () {
+                $('#wallet').animate({ scrollLeft: scrollRight + 'px' }, 200).promise().done(function () {
                     loading = 0;
                 });
                 wallet++;
@@ -337,7 +318,7 @@ const prev_page = () => {
             case "home":
                 titles_home.pop();
                 scrollLeft = $("#home").scrollLeft() - $(".home_page").width();
-                $('#home').animate({scrollLeft: scrollLeft + 'px'}, 600).promise().done(function () {
+                $('#home').animate({ scrollLeft: scrollLeft + 'px' }, 200).promise().done(function () {
                     loading = 0;
                 });
                 home--;
@@ -354,7 +335,7 @@ const prev_page = () => {
             case "search":
                 titles_search.pop();
                 scrollLeft = $("#search").scrollLeft() - $(".search_page").width();
-                $('#search').animate({scrollLeft: scrollLeft + 'px'}, 600).promise().done(function () {
+                $('#search').animate({ scrollLeft: scrollLeft + 'px' }, 200).promise().done(function () {
                     loading = 0;
                 });
                 search--;
@@ -371,24 +352,23 @@ const prev_page = () => {
             case "locations":
                 titles_locations.pop();
                 scrollLeft = $("#locations").scrollLeft() - $(".locations_page").width();
-                $('#locations').animate({scrollLeft: scrollLeft + 'px'}, 600).promise().done(function () {
+                $('#locations').animate({ scrollLeft: scrollLeft + 'px' }, 200).promise().done(function () {
                     loading = 0;
                 });
                 locations--;
-
                 $("#title_main").text(titles_locations[titles_locations.length - 1]);
                 if (locations < 0) {
                     locations = 0;
                     titles_locations = ["داروخانه ها"];
                 }
-                if (locations === 0) {
+                if (locations == 0) {
                     $("#back").css('color', '#8080808c');
                 }
                 break;
             case "bascket":
                 titles_bascket.pop();
                 scrollLeft = $("#bascket").scrollLeft() - $(".bascket_page").width();
-                $('#bascket').animate({scrollLeft: scrollLeft + 'px'}, 600).promise().done(function () {
+                $('#bascket').animate({ scrollLeft: scrollLeft + 'px' }, 200).promise().done(function () {
                     loading = 0;
                 });
                 bascket--;
@@ -405,7 +385,7 @@ const prev_page = () => {
             case "history_order":
                 titles_history.pop();
                 scrollLeft = $("#history_order").scrollLeft() - $(".history_page").width();
-                $('#history_order').animate({scrollLeft: scrollLeft + 'px'}, 600).promise().done(function () {
+                $('#history_order').animate({ scrollLeft: scrollLeft + 'px' }, 200).promise().done(function () {
                     loading = 0;
                 });
                 history_order--;
@@ -419,7 +399,7 @@ const prev_page = () => {
             case "wallet":
                 titles_wallet.pop();
                 scrollLeft = $("#wallet").scrollLeft() - $(".wallet_page").width();
-                $('#wallet').animate({scrollLeft: scrollLeft + 'px'}, 600).promise().done(function () {
+                $('#wallet').animate({ scrollLeft: scrollLeft + 'px' }, 200).promise().done(function () {
                     loading = 0;
                 });
                 wallet--;
@@ -466,7 +446,7 @@ const fill_batch_list = (data, target, image, title) => {
 };
 
 const show_more_detils = (id) => {
-    
+
     // TODO: have this code we will use it later
     // let target_end;
     // if (target === '#locations_page_5') {
@@ -496,21 +476,21 @@ const show_more_detils = (id) => {
     // );
     // next_page(name);
 
-    if ($("#"+id).hasClass("hide_detail")) {
+    if ($("#" + id).hasClass("hide_detail")) {
         // چون با انیمیشن نمیشه ارتفاع را اوتو کرد من اول ارتفاع رو اوتو میکنم و اندازشو میگیرم و بعد بر میگردونم سر جاش و با انیمیت میبرم به اون ارتفاع
-        let autoHeight = $("#"+id).css('height', 'auto').height(); $("#"+id).css('height', '125px');
+        let autoHeight = $("#" + id).css('height', 'auto').height(); $("#" + id).css('height', '125px');
         //
-        $("#"+id).animate({
+        $("#" + id).animate({
             "height": autoHeight
-        }, 500).removeClass("hide_detail"); 
-        console.log($("#"+id).attr("class"));
-        console.log("#"+id);
+        }, 500).removeClass("hide_detail");
+        console.log($("#" + id).attr("class"));
+        console.log("#" + id);
     } else {
-        $("#"+id).animate({
+        $("#" + id).animate({
             "height": "125px"
         }, 500).addClass("hide_detail");
-        console.log($("#"+id).attr("class")) ;
-        console.log("hide","#"+id);
+        console.log($("#" + id).attr("class"));
+        console.log("hide", "#" + id);
     }
     // if ($("#"+id).hasClass("hide_detail")) {
     //     $("#"+id).css({
@@ -536,7 +516,8 @@ const search_function = () => {
 };
 
 const fill_list_items = (data, target, title) => {
-    let target_end;
+    let target_end;// inja
+    console.log('order_list', order_list);
     if (target === '#home_page_3 ul') {
         target_end = '#home_page_4';
     } else if (target === '#locations_page_4 ul') {
@@ -547,14 +528,19 @@ const fill_list_items = (data, target, title) => {
     $(target).html("");
     if (!data) {
         $(target).html("<div class='no_item'>!موردی برای نمایش وجود ندارد</div>");
-    } else { 
+    } else {
         $.each(data, function (index, value) {
-            let name = value.name; 
+            count_this_item = 0; 
+            for (i=0; i<order_list.length; i++) {
+                if (order_list[i].id == value.id) {
+                    count_this_item = order_list[i].count;
+                }
+            }
+            let name = value.name;
             data_description = JSON.parse(value.description);
             console.log("IRC=> ", data_description.IRC);
             short_description = data_description.short_description;
-            description        = data_description.description;
-            
+            description = data_description.description;
             name_farsi = name.split("*")[0];
             name_english = name.split("*")[1];
             // if (name.length > 22) {
@@ -562,16 +548,18 @@ const fill_list_items = (data, target, title) => {
             //     name += "...";
             // }
 
-            // if (short_description) {
-            //     short_description = short_description.substring(0, 100);
-            //     short_description += '...';
-            // }
-            let li_id = target.replace(" ", "_").replace("#", "")+index;
+            if (short_description.length > 5) {
+                // short_description = short_description.substring(0, 100);
+                short_description += "<hr>";
+            } else {
+                //
+            }
+            let li_id = target.replace(" ", "_").replace("#", "") + index;
             $(target).append( /*html*/
                 `<li id="${li_id}" class="list_item_li hide_detail" title="${name_farsi}" target=${value.id}>
                     <div class="list_item_li_image_names">
                         <div class="img"> 
-                            <img onerror="replace_default_image(this)" alt="item" class="item" src="/pictures/${(value.picture_id+".jpg")}">
+                            <img onerror="replace_default_image(this)" alt="item" class="item" src="/pictures/${(value.picture_id + ".jpg")}">
                         </div>
                         <div class="names">
                             <div class="name">${name_farsi}</div>
@@ -581,7 +569,7 @@ const fill_list_items = (data, target, title) => {
                                 <div onclick="show_more_detils('${li_id}')" class="button_description">توضیحات</div>
                                 <div class="plus_mines">
                                     <span class="oprator plus">+</span>
-                                    <span class="number">0</span>
+                                    <span class="number">${count_this_item}</span>
                                     <span class="oprator mines">-</span>
                                 </div>
                             </div>
@@ -590,7 +578,7 @@ const fill_list_items = (data, target, title) => {
                     <div class="more_details">
                         <hr class="more_details_hr">
                         <div class="description_normal">
-                            ${short_description} <hr>
+                            ${short_description} 
                             ${description || "توضیحی برای این محصول وجود ندارد"} 
                         </div>
                         <div class="pdf_function">
@@ -649,7 +637,7 @@ const select_address = (data, title, target) => {
             </tr>`;
         main_price += value.count * parseInt((value.price).replace("/", ""));
     });
-    
+
     $(target).html( /*html*/
         `<div class="div_view">
 			<div class="bascket_header">جمع کل: <span class="bascket_header_main_price">${cama_for_digit(main_price)}</span> تومان </div>
@@ -697,14 +685,14 @@ const select_address = (data, title, target) => {
 
 const apply_use_wallet = (data) => {
     if (data.status === "ok") {
-        $(".bascket_header_main_price").text(parseInt($(".bascket_header_main_price").text().replace("/",""))-user.amount_wallet);
+        $(".bascket_header_main_price").text(parseInt($(".bascket_header_main_price").text().replace("/", "")) - user.amount_wallet);
         //$(".bascket.header").html(`جمع کل: ${cama_for_digit(main_price-user.amount_wallet)} تومان`);
     }
 };
 
 const apply_dont_use_wallet = (data) => {
     if (data.status === "ok") {
-        $(".bascket_header_main_price").text(parseInt($(".bascket_header_main_price").text().replace("/",""))+parseInt(user.amount_wallet));
+        $(".bascket_header_main_price").text(parseInt($(".bascket_header_main_price").text().replace("/", "")) + parseInt(user.amount_wallet));
         //$(".bascket.header").html(`جمع کل: ${cama_for_digit(main_price+user.amount_wallet)} تومان`);
     }
 };
@@ -712,16 +700,16 @@ const apply_dont_use_wallet = (data) => {
 const turn_on_toggle_button = (el) => {
     if ($(el).hasClass("off")) {
         $(el).find("span").animate({
-            "margin-left":"26px"
+            "margin-left": "26px"
         }, 100);
-        $(el).css({"background":"red", "border-color": "red"});
+        $(el).css({ "background": "red", "border-color": "red" });
         $(el).removeClass("off");
         use_wallet();
     } else {
         $(el).find("span").animate({
-            "margin-left":"0"
+            "margin-left": "0"
         }, 100);
-        $(el).css({"background":"gray", "border-color": "gray"});
+        $(el).css({ "background": "gray", "border-color": "gray" });
         $(el).addClass("off");
         dont_use_wallet();
     }
@@ -738,7 +726,7 @@ const apply_discount = (data) => {
 const payment_function = (title, target) => {
     $(target).html("<div class='payment_page'> در حال انتقال به بانک </div>");
     next_page(title);
-    setTimeout(function() {
+    setTimeout(function () {
         window.location.replace("https://sep.shaparak.ir/Payment.aspx?Amount=120000&MID=11108164&ResNum=69074&Wage=0&RedirectURL=https://shop.partapp.ir/order/ui/2/index.html");
     }, 500);
 };
@@ -746,7 +734,6 @@ const payment_function = (title, target) => {
 const profile_fill = (user_data, target) => {
     $(target).html("");
     console.log("profile_fill", user_data);
-
     if (user_data) {
         switch (user_data.gender) {
             case 1:
@@ -762,7 +749,7 @@ const profile_fill = (user_data, target) => {
         $(target).html( /*html*/
             `<div class="div_view">
                 <div class='profile' class='profile_photo'>
-                    <img alt="img" src='${user_data.image}'>
+                    <img alt="img" src='images/profile.png'>
                 </div>
                 <div class='profile_phone profile_row'>
                     <span>شماره تلفن:</span>
@@ -778,10 +765,11 @@ const profile_fill = (user_data, target) => {
                 </div>
                 <div class='profile_birthday profile_row'>
                     <span>تاریخ تولد:</span>
-                    <span class="change_able">${user_data.birth_day}</span>
+                    <span class="change_able">${user_data.birthday}</span>
                 </div>
             </div>
             <div class='div_functions'>
+            <button onclick="exit_user()" class="cbtn profile_uodate_button"><span>خــــــروج</span><i class="fa fa-exclamation"></i></button>
                 <button onclick="ready_user_update(this)" class="cbtn profile_uodate_button"><span>ثبت اطلاعات</span><i class="fa fa-2x fa-caret-right"></i></button>
             </div>`
         );
@@ -798,11 +786,11 @@ $(".main_page").on("click", ".change_able", function () {
 });
 
 const ready_user_update = (element) => {
-    let name                  = $(element).parent().prev().children().eq("2").find("input").val();
-    let gender                = $(element).parent().prev().children().eq("3").find("input").val();
-    let birth_day             = $(element).parent().prev().children().eq("4").find("input").val();
-    if (!name) name           = user.name;
-    if (!gender) gender       = user.gender;
+    let name = $(element).parent().prev().children().eq("2").find("input").val();
+    let gender = $(element).parent().prev().children().eq("3").find("input").val();
+    let birth_day = $(element).parent().prev().children().eq("4").find("input").val();
+    if (!name) name = user.name;
+    if (!gender) gender = user.gender;
     if (!birth_day) birth_day = user.birth_day;
     let data = {
         "name": name,
@@ -815,9 +803,9 @@ const ready_user_update = (element) => {
 const wallet_fill = (data, target) => {
     // TODO: we are here 
     let invoice = "";
-    $.each(data.invoice, function (index,value) {
+    $.each(data.invoice, function (index, value) {
         invoice += `<tr>
-                        <td>${parseInt(index)+1}</td>
+                        <td>${parseInt(index) + 1}</td>
                         <td>${value.date}</td>
                         <td>${value.operator}</td>
                         <td>${cama_for_digit(value.amount)}</td>
@@ -870,7 +858,7 @@ const wallet_fill = (data, target) => {
 const pay_amount_wallet = () => {
     $("#wallet_page_2").html(`در حال انتقال به بانک`);
     next_page("شارژ کیف پول");
-    setTimeout(function() {
+    setTimeout(function () {
         window.location.replace("https://sep.shaparak.ir/Payment.aspx?Amount=120000&MID=11108164&ResNum=69074&Wage=0&RedirectURL=https://shop.partapp.ir/order/ui/2/index.html");
     }, 500);
 };
@@ -886,24 +874,24 @@ const show_wallet_input_radio = () => {
 };
 
 const select_this_amount_for_sharj = (element) => {
-    $(".wallet_sharj_price").css("color","black");
+    $(".wallet_sharj_price").css("color", "black");
     $(".wallet_sharj_radio").css({
-        "background-color":"white",
-        "border-color":"gray"
+        "background-color": "white",
+        "border-color": "gray"
     });
-    $(element).find(".wallet_sharj_price").css("color","#025b84");
+    $(element).find(".wallet_sharj_price").css("color", "#025b84");
     $(element).find(".wallet_sharj_radio").css({
-        "background-color":"#025b84",
-        "border-color":"#025b84" 
+        "background-color": "#025b84",
+        "border-color": "#025b84"
     });
-    $(".amount_wallet_sharj_input").val( $(element).find(".wallet_sharj_price").text().replace("/","").replace("تومان",""));
+    $(".amount_wallet_sharj_input").val($(element).find(".wallet_sharj_price").text().replace("/", "").replace("تومان", ""));
 };
 
 const select_this_amount_for_sharj_input = () => {
-    $(".wallet_sharj_price").css("color","black");
+    $(".wallet_sharj_price").css("color", "black");
     $(".wallet_sharj_radio").css({
-        "background-color":"white",
-        "border-color":"gray"
+        "background-color": "white",
+        "border-color": "gray"
     });
 };
 
@@ -998,12 +986,12 @@ const history_orders_fill_details = (data, target) => {
     );
 };
 
-const repeat_this_order= (order_id) => {
+const repeat_this_order = (order_id) => {
     console.log(order_id);
     order = get_order_repeat(order_id);
     order_list = order.order_list;
     order_list_count = 0;
-    $.each(order_list, function(index, value) {
+    $.each(order_list, function (index, value) {
         order_list_count++;
     });
     $(".badget_bascket").text(order_list_count).fadeIn("fast").css('display', 'flex');
@@ -1057,25 +1045,25 @@ const bascket_fill = (order_list) => {
         items = "";
         if (shop_id == 110) {
             function_div = /*html*/
-            `<div class="div_functions">
+                `<div class="div_functions">
                 <button class="cbtn button_function button_select_address" onclick="get_order_complete('انتخاب آدرس', '#bascket_page_2')">
                     <span>انتخاب آدرس</span><i class="fa fa-2x fa-caret-right"></i>
                 </button>
             </div>`;
         } else {
             function_div = /*html*/
-            `<div class="div_functions">
+                `<div class="div_functions">
                 <button class="cbtn button_function button_select_address" onclick="get_order_complete('انتخاب آدرس', '#bascket_page_2')">
                     <span>انتخاب آدرس</span><i class="fa fa-2x fa-caret-right"></i>
                 </button>
             </div>`;
         }
-       
-        $.each(order_list, function (index, value) { 
+
+        $.each(order_list, function (index, value) {
             items += /*html*/
-            `<tr>
+                `<tr>
                 <td style="text-align: right">${value.name}</td>
-                <td>${value.price.replace("تومان","")}</td>
+                <td>${value.price.replace("تومان", "")}</td>
                 <td id="${value.id}">
                     <div class="plus_mines plus_mines_bascket"><span onclick="inc_item(${value.id})" class="oprator plus">+</span><span class="number">${value.count}</span><span onclick="dec_item(${value.id})" class="oprator mines">-</span></div>
                 </td>
@@ -1182,7 +1170,7 @@ $(".main_page").on("click", ".oprator", function () {
                             if (order_list[i].count === 0) {
                                 order_list.splice(i, 1);
                             }
-                        }  
+                        }
                     }
                     $(this).prev().text(parseInt($(this).prev().text()) - 1);
                     if ($(this).prev().text() < 0) {
@@ -1201,8 +1189,8 @@ $(".main_page").on("click", ".oprator", function () {
         }
     } else {
         let item_exist = 0;
-        let item_id    = $(this).closest("li").attr("target");
-        let item_name  = $(this).closest("li").find(".name").text();
+        let item_id = $(this).closest("li").attr("target");
+        let item_name = $(this).closest("li").find(".name").text();
         let item_price = $(this).closest("li").find(".price").text();
         if ($(this).hasClass("plus")) {
             // if (bascket_item_shop_id) {
@@ -1302,10 +1290,10 @@ $(".main_page").on("click", ".oprator", function () {
     }
 });
 
-const modal_show = (header=null, content=null, footer=null, close_able=1, delay=0) => {
+const modal_show = (header = null, content = null, footer = null, close_able = 1, delay = 0) => {
     setTimeout(function () {
         $("#modal").fadeIn().promise().done(function () {
-            $("#modal_body").animate({"top": "10%"}, 300);
+            $("#modal_body").animate({ "top": "10%" }, 300);
         });
         $("#modal_header").html(header);
         $("#modal_content").html(content);
@@ -1323,7 +1311,7 @@ const modal_show = (header=null, content=null, footer=null, close_able=1, delay=
 
 const modal_hide = () => {
     let start = +new Date();
-    $("#modal_body").animate({"top": "-100%"}, 500).promise().done(function () {
+    $("#modal_body").animate({ "top": "-100%" }, 500).promise().done(function () {
         $("#modal").fadeOut("fast").promise().done(function () {
             let end = +new Date();
             console.log(end - start);
@@ -1349,16 +1337,12 @@ const user_get_location = () => {
 };
 
 const showPosition = position => {
-    let lat = position.coords.latitude;
-    let long = position.coords.longitude;
-    let accuracy = position.coords.accuracy;
-
-    user_location = {
-        "lat": lat,
-        "long": long,
-        "acc": accuracy
-    };
-    locations_update_list(lat, long);
+    latitude = position.coords.latitude;
+    longitude = position.coords.longitude;
+    accuracy = position.coords.accuracy;
+    user_location.latitude = latitude;
+    user_location.longitude = longitude;
+    locations_update_list(latitude, longitude);
 };
 
 const locations_update_list = (lat = null, long = null) => {
@@ -1383,7 +1367,7 @@ const locations_update_list = (lat = null, long = null) => {
     }
 };
 
-const locations_update_list_sub_function = (pharms, lat=35.5865586, long=51.7586203) => {
+const locations_update_list_sub_function = (pharms, lat = 35.5865586, long = 51.7586203) => {
     let pharm_icon = L.icon({
         iconUrl: 'images/location_map.png',
         // shadowUrl: '../../../../leaflet/marker-shadow.png',
@@ -1391,17 +1375,18 @@ const locations_update_list_sub_function = (pharms, lat=35.5865586, long=51.7586
         shadowAnchor: [10, 40], // the same for the shadow
         popupAnchor: [2, -38] // point from which the popup should open relative to the iconAnchor
     });
-    for(i=0;i<pharms_marker.length;i++) {
+    for (i = 0; i < pharms_marker.length; i++) {
         mymap.removeLayer(pharms_marker[i]);
     }
+    spinner("end");
     // if (!lat) lat = 35.5865586;
     // if (!long) long = 51.7586203;
     if (pharms.length) {
         for (let i = 0; i < pharms.length; i++) {
-            let pharm_lat  = pharms[i].lat;
+            let pharm_lat = pharms[i].lat;
             let pharm_lang = pharms[i].lng;
-            let distance   = Math.round(getDistanceFromLatLonInKm(lat, long, pharm_lat, pharm_lang) * 1000);
-            let transport  = Math.round(parseInt(pharms[i].transport_rate * (distance/1000)) + parseInt(pharms[i].transport_fixed));
+            let distance = Math.round(getDistanceFromLatLonInKm(lat, long, pharm_lat, pharm_lang) * 1000);
+            let transport = Math.round(parseInt(pharms[i].transport_rate * (distance / 1000)) + parseInt(pharms[i].transport_fixed));
             pharms[i].distance = distance;
             pharms[i].transport = transport;
             pharms_marker[i] = L.marker([pharm_lat, pharm_lang], {
@@ -1412,14 +1397,13 @@ const locations_update_list_sub_function = (pharms, lat=35.5865586, long=51.7586
         //     let group = new L.featureGroup(pharms_marker);
         //     mymap.fitBounds(group.getBounds());
         // }
-        
+
         pharms = pharms.sort(compare);
         fill_list_pharm(pharms);
     } else {
         $("#list_pharms").html("");
-        $("#list_pharms").append(`<div class="error_get_location">موردی برای نمایش وجود ندارد</div>`);    
+        $("#list_pharms").append(`<div class="error_get_location">موردی برای نمایش وجود ندارد</div>`);
     }
-    spinner("end");
 };
 
 const errorHandler = () => {
@@ -1442,7 +1426,7 @@ const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
         Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-     // Distance in km
+    // Distance in km
     return R * c;
 };
 
@@ -1463,11 +1447,11 @@ const fill_list_pharm = (pharms) => {
             `<div class="pharm_listed" onClick="get_root_item(${value.id}, '#locations_page_2 ul', '${value.name}')">
                  <div class="pharm_name_distance">
                     <span>${value.name}</span>
-                    <span> ${value.distance-(value.distance%10)} <span>متر</span>  </span>
+                    <span> ${value.distance - (value.distance % 10)} <span>متر</span>  </span>
                  </div>
                  <div class="pharm_transport">
                     <span>هزینه حمل:</span>
-                    <span> ${cama_for_digit(Math.round(value.transport-(value.transport%500)))}  <span>تومان</span>  </span>
+                    <span> ${cama_for_digit(Math.round(value.transport - (value.transport % 500)))}  <span>تومان</span>  </span>
                  </div>
             </div>`
         );
@@ -1487,8 +1471,8 @@ const view_pdf_file = (file, target) => {
     } else if (target === '#search_page_3') {
         target_end = '#search_page_4';
     }
-    console.log(target , " => ", target_end);
-    let file_pdf = "https://shop.partapp.ir/pictures/"+file;
+    console.log(target, " => ", target_end);
+    let file_pdf = "https://shop.partapp.ir/pictures/" + file;
     // $(target).html( 
     //     `<div class="preview_pdf">
     //         <object data="${file_pdf}" type="application/pdf" width="100%" height="auto"><span class="not_login">امکان پیش نمایش وجود ندارد</span></object>
@@ -1503,7 +1487,7 @@ const view_pdf_file = (file, target) => {
 };
 
 const download_pdf_file = (file) => {
-    window.location = "/pictures/"+file;
+    window.location = "/pictures/" + file;
 };
 
 const spinner = (what) => {
@@ -1511,5 +1495,44 @@ const spinner = (what) => {
         $("#darsi_loading").fadeIn("fast");
     } else if (what == "end") {
         $("#darsi_loading").fadeOut("slow");
+    }
+};
+
+const modal_update_user_name = () => {
+    let header = `نام و نام خانوادگی خود را وارد کنید`;
+    let content = `<input class='cinput cinput-login' type="text" id='login_input_name' placeholder='نام و نام خانوادگی'>`;
+    let footer = `<button onclick='user_update_name_submit()' class='cbtn cbtn-login-submit'>ارسال</button>`;
+    let close_able = 1;
+    let delay = 1000;
+    modal_show(header, content, footer, close_able, delay);
+};
+
+const user_update_name_submit = () => {
+    spinner("start");
+    name = $("#login_input_name").val();
+    update_user_name(name);
+};
+
+const result_update_user_name = (data, name) => {
+    spinner('end');
+    if (data.status == "ok") {
+        snackbar("نام با موفقیت ذخیره شد", 'green');
+        user.name = name;
+        profile_fill(user, "#profile_page_1");
+        modal_hide();
+    } else {
+        snackbar("خطا در ارتباط", 'red');
+    } 
+};
+
+
+const result_exit_user = (data) => {
+    spinner('end');
+    console.log(data);
+    if (data.status == "ok") {
+        user = null;
+        profile_fill(user, "#profile_page_1");
+    } else {
+        snackbar('خطا در ارتباط با سرور', 'red');
     }
 };

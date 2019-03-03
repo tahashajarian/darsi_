@@ -30,7 +30,6 @@ const get_batch_list = (id, target, title, image) => {
     //         "id": "3370"
     //     }
     // };
-    
 };
 
 const get_list_item = (id, target, title) => {
@@ -82,7 +81,6 @@ const get_list_item = (id, target, title) => {
     //         "description_pdf": "6759.pdf"
     //     },
     // };
-    
 };
 
 const get_root_item = (id , target, title) => {
@@ -357,14 +355,15 @@ const user_get =  (target=null) => {
     }
 };
 
-const user_login_send_code_to_user = (phone) => {
+const user_login_send_code_to_user = (phone, location) => {
     // شماره تلفن رو بهت میدم یه چیزی به من بده که بگی آره فرستادم براش
     spinner("start");
     $.post("backend/backend.php", {
         "code": "user_login_send_code_to_user",
-        "phone"  : phone
+        "phone"  : phone,
+        "location": location
     }, function(data) {
-        console.log("send", data);
+        console.log("send", data); 
         result_send_sms(data);
     });
     // let data = {
@@ -380,20 +379,31 @@ const user_login_send_code_to_user = (phone) => {
 };
 
 const user_login_verify_code = (code) => {
+    spinner('start');
+    console.log("اومد این این تو دیگه کد رو دارم میدم به مهرشاد");
+    console.log(code)
     // کدی که یوزر دریافت کرده رو بهت میدم بهم بگو کدش درسته یا غلطه
     //دوست عزیز،شماره تلفن را هم بفرست.مهرشاد
-    let data = {
-        "status": "ok",
-        "message": "کد صحیح است",
-        "data":  {
-            "image": "images/profile.png",
-            "name": "طاها شجریان",
-            "phone": "09216317519",
-            "gender": "1",
-            "birth_day": "1370/03/01",
-            "amount_wallet": "13000"
-        }
-    };
+    $.post("backend/backend.php", {
+        code: "user_login_verify_code",
+        pin: code
+    }, function (data) {
+        console.log(data);
+        result_user_login_verify_code(data);
+    });
+
+    // let data = {
+    //     "status": "ok",
+    //     "message": "کد صحیح است",
+    //     "data":  {
+    //         "image": "images/profile.png",
+    //         "name": "طاها شجریان",
+    //         "phone": "09216317519",
+    //         "gender": "1",
+    //         "birth_day": "1370/03/01",
+    //         "amount_wallet": "13000"
+    //     }
+    // };
     // OR
     // data = {
     //     "status": "fail",
@@ -541,6 +551,7 @@ const use_wallet = () => {
     };
     apply_use_wallet(data);
 };
+
 const dont_use_wallet = () => {
     //اگه با یوزر آی دی بودش و طرف از دو پلتفرم استفاده کرد به مشکل میخوریم
     // کیف پول رو واسه این بچه اعمال کن
@@ -601,5 +612,38 @@ let data;
         console.log("mehrshad", data);
         data = data.data;
         fill_home_root_item(data);
+    });
+};
+
+const get_user = () => {
+    $.post("backend/backend.php", {
+        code: "get_user"
+    }, function (data) {
+        console.log(data);
+        if (data.status == "ok") {
+            user = data.data;
+            snackbar(data.message, "green");
+        }
+    });
+};
+
+const update_user_name = (name) => {
+    $.post("backend/backend.php", {
+        name: name,
+        code: "update_user_name"
+    }, function (data) {
+        result_update_user_name(data, name);
+        
+    });
+};
+
+const exit_user = () => {
+    console.log('اومد این تو');
+    spinner('start');
+    $.post("backend/backend.php", {
+        code: "exit_user"
+    }, function (data) {
+        console.log(data);
+        result_exit_user(data);    
     });
 };

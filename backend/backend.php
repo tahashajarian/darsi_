@@ -2,11 +2,15 @@
 include "dbconnect.php";
 include "session.php";
 include 'Mobile_Detect.php';
+
 $shop_pass='13286301546233571032';
+
 session_set('user_agent',$_SERVER['HTTP_USER_AGENT']);
 session_set('shop_pass',$shop_pass);
+
 $sql = "SELECT id,phone FROM `shop`  WHERE pass='$shop_pass'";
 $result = $conn->query( $sql ) ;
+
 if ( $row = $result->fetch_assoc() ) {
 	$shop_id= $row['id'];
 	$phone= $row['phone'];
@@ -80,6 +84,60 @@ switch ($_POST[code]) {
 		case 'set_session':
 				set_session();
 				break;
+		case 'get_user':
+				get_user();
+				break;
+		case 'update_user_name':
+				update_user_name();
+				break;
+		case 'exit_user':
+				exit_user();
+				break;
+}
+function exit_user(){
+	session_clear();
+	$json->status = "ok";
+	$json->message = "";
+	header ('Content-Type: application/json');
+	echo json_encode ($json, JSON_NUMERIC_CHECK);
+}
+function update_user_name(){
+	$conn=$GLOBALS['conn'];
+	$user_id=+session_get("user_id");
+	$name=$_POST[name];
+	$stmt = $conn->prepare( "UPDATE user SET name=? WHERE id=?" );
+	$stmt->bind_param( "si", $name,$user_id );
+	if($stmt->execute()){
+		$json->status = "ok";
+		$json->message = "نام بروز شد";
+	}else{
+		$json->status = "fail";
+		$json->message = "مشکل در بروزرسانی نام";
+	}
+	header ('Content-Type: application/json');
+	echo json_encode ($json, JSON_NUMERIC_CHECK);
+}
+function get_user(){
+	$conn=$GLOBALS['conn'];
+	$user_id=+session_get("user_id");
+	if($user_id>0){
+	$stmt = $conn->prepare( "SELECT * FROM `user` WHERE id=?" );
+	$stmt->bind_param( "i", $user_id );
+	$stmt->execute();
+	$result = $stmt->get_result();
+	if ( $row = $result->fetch_assoc() ) {
+		$user=$row;
+	}
+	$json->status = "ok";
+	$json->message = $user[name]."، خوش آمدید";
+	$json->data= $user;
+
+}else{
+	$json->status = "fail";
+	$json->message = "هیچ کاربری یافت نشد";
+}
+header ('Content-Type: application/json');
+echo json_encode ($json, JSON_NUMERIC_CHECK);
 }
 function get_session(){
 	$json->status = "ok";
@@ -599,17 +657,15 @@ if(($status==2||$status==0)&&$func!="remove"){
 ///////////////////////////////////////////////////////////////////////
 function user_login_verify_code(){
   $conn=$GLOBALS['conn'];
-  $master_id = $_POST[ 'master_id' ];
   $pin = isset($_POST[ 'pin' ])?$_POST[ 'pin' ]:0;
   $pin = convertNumbers( $_POST[ 'pin' ], $toPersian = false );
-  $phone = convertNumbers( +$_POST['phone'], $toPersian = false );
-
+	$user_id = session_get('user_id');
   $user_Array = array();
   $domain = $_SERVER[ 'HTTP_HOST' ];
   $shop_id=$GLOBALS['shop_id'];
   if($pin>0){
-  $stmt = $conn->prepare( "SELECT * FROM `user` WHERE   phone=? AND pin=? AND shop_id=? AND (pin_time+86400)>? AND type=1" );
-  $stmt->bind_param( "siii", $phone,$pin,$shop_id,time() );
+  $stmt = $conn->prepare( "SELECT * FROM `user` WHERE   id=? AND pin=? AND shop_id=? AND (pin_time+86400)>? AND type=1" );
+  $stmt->bind_param( "iiii", $user_id,$pin,$shop_id,time() );
   $stmt->execute();
   $result = $stmt->get_result();
   if ( $row = $result->fetch_assoc() ) {
@@ -639,27 +695,71 @@ function user_login_verify_code(){
   echo json_encode ($json, JSON_NUMERIC_CHECK);
 }
 }
-
-
 function user_login_send_code_to_user(){
 
+	$conn=$GLOBALS['conn'];
+	$phone = +convertNumbers( $_POST[ 'phone' ]);
+	$location=$_POST['location'];
+	$shop_id=$GLOBALS['shop_id'];
+	$stmt = $conn->prepare( "SELECT id FROM `user` WHERE phone=? AND shop_id=? AND type=1" );
+	$stmt->bind_param( "si", $phone, $shop_id );
+	$stmt->execute();
+	$result = $stmt->get_result();
+	if ( $row = $result->fetch_assoc() ) {
+		session_set("user_id",$row['id']);
+		get_pin($phone);
+	} else {
+
+		register($location,$phone);
+		get_pin($phone);
+	}
+	$result->close();
+	$stmt->close();
+}
+function register($location,$phone){
+	$conn=$GLOBALS['conn'];
+	$shop_id=$GLOBALS['shop_id'];
+
+	$flag = true;
+	while ( $flag ) {
+	$pass=rand(1000000000,9999999999).rand(1000000000,9999999999);
+	$sql = "SELECT COUNT(pass) AS count FROM `user` WHERE pass='$pass' AND type=1";
+
+	$result = $conn->query( $sql );
+	if ( $row = $result->fetch_assoc() ) {
+		$count = $row[ 'count' ];
+		if ( $count > 0 )
+			$flag = true;
+		else {
+			$loc_array = array();
+			$loc_array = json_decode( $location, true );
+
+			$google_addr = file_get_contents( "https://shop.partapp.ir/location/get_address.php?lat=" . $loc_array[ 'latitude' ] . "&lng=" . $loc_array[ 'longitude' ] );
+			$time = $_SERVER[REQUEST_TIME];
+			$stmt = $conn->prepare( "INSERT INTO `user`( `pass`, `phone`, `shop_id`,google_addr,time_stamp,location) VALUES (?,?,?,?,?,?)" );
+			$stmt->bind_param( "siisis", $pass, $phone,  $shop_id, $google_addr, $time,$location);
+			try {
+				$stmt->execute();
+				$user_id = $stmt->insert_id;
+				session_set("user_id",$user_id);
+
+				$flag = false;
+
+			} catch ( Exception $e ) {
+				echo $e->getMessage();
+			}
+		}
+	}
+	}
+	return $user_id;
+}
+function get_pin($phone){
   $conn=$GLOBALS['conn'];
-  $phone = +convertNumbers($_POST['phone']);
   $sql = "SELECT * FROM `shop`  WHERE id=".$GLOBALS['shop_id'];
   $result = $conn->query( $sql );
   if ( $row = $result->fetch_assoc() ) {
   $shop_array = $row;
   }
-	//فعلا برای نمایشه
-	$pin = rand( 1000, 9999 );
-	$url = "https://api.kavenegar.com/v1/672F656E30536E4335364B4735474C44557149542F673D3D/verify/lookup.json?receptor=$phone&token=" . convertNumbers( $pin ) . "&token10=".urlencode($shop_array['name'])."&template=Verify";
-	$res=file_get_contents( $url );
-	$json->status = "ok";
-	$json->data = "";
-	$json->message ="کد به شماره تلفن شما ارسال شد";
-	header ('Content-Type: application/json');
-	echo json_encode ($json, JSON_NUMERIC_CHECK);
-	exit;
   $stmt = $conn->prepare( "SELECT * FROM `user` WHERE phone=? AND shop_id=? AND type=1" );
   $stmt->bind_param( "ii", $phone, $GLOBALS['shop_id']);
   $stmt->execute();
