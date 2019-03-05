@@ -22,11 +22,12 @@ $(document).ready(function () {
     spinner("end");
     user_get_location();
     get_user();
+    get_order();
 });
 
 
 // define variable    
-let lat; let long; let locations = 0; let user_id = 3590; let shop_id = 110; let titles_home = []; let titles_search = []; let titles_locations = []; let titles_bascket = []; let titles_profile = []; let titles_wallet = []; let titles_history = []; let titles_messages = []; let titles_doctor = []; let loading = 0; let home = 0; let history_order = 0; let search = 0; let user_location = {latitude: "35.5865586", longitude: "51.7586203"}; let wallet = 0; let bascket = 0; let data = {}; let order_list = []; let pharms_marker = []; let bascket_item_shop_id = 0; let order_id = 0; let active_article; let is_open; let scrollRight; let scrollLeft; let user = null; let is_adding = 0; let mymap; let marker_location; let order;
+let phone; let lat; let long; let locations = 0; let user_id = 3590; let shop_id = 110; let titles_home = []; let titles_search = []; let titles_locations = []; let titles_bascket = []; let titles_profile = []; let titles_wallet = []; let titles_history = []; let titles_messages = []; let titles_doctor = []; let loading = 0; let home = 0; let history_order = 0; let search = 0; let user_location = {latitude: "35.5865586", longitude: "51.7586203"}; let wallet = 0; let bascket = 0; let data = {}; let order_list = []; let pharms_marker = []; let bascket_item_shop_id = 0; let order_id = 0; let active_article; let is_open; let scrollRight; let scrollLeft; let user = null; let is_adding = 0; let mymap; let marker_location; let order = {};
 
 const main_button = target => {
     if (!loading) {
@@ -155,12 +156,11 @@ const toggle_slide_button_out = () => {
     $(".toggle_slide_buttons").attr("is_open", "1");
 };
 
-const user_login = () => {
+const user_login = (delay=0) => {
     let header = `شماره تلفن همراه خود را وارد کنید`;
     let content = `<input class='cinput cinput-login' type="number" onkeydown="if(this.value.length===11 && event.keyCode!==8) return false;" id='login_input' placeholder='مثال: 09123456789'>`;
-    let footer = `<button onclick='user_login_send_phone()' class='cbtn cbtn-login-submit'>ارسال</button>`;
+    let footer =  `<button onclick='user_login_send_phone()' class='cbtn cbtn-login-submit'>ارسال</button>`;
     let close_able = 1;
-    let delay = 0;
     modal_show(header, content, footer, close_able, delay);
     setTimeout(function () {
         $("#login_input").focus();
@@ -168,7 +168,7 @@ const user_login = () => {
 };
 
 const user_login_send_phone = () => {
-    let phone = $("#login_input").val();
+    phone = $("#login_input").val();
     if (!phone) {
         snackbar("شماره تلفن خود را وارد کنید", "red");
         $("#login_input").focus();
@@ -188,12 +188,7 @@ const result_send_sms = (send_code) => {
     if (send_code.status === "ok") {
         snackbar(send_code.message, "green");
         modal_hide();
-        let header = `کد تایید را وارد کنید`;
-        let content = `<input class='cinput cinput-login' id="login_user_code" type="number" onkeydown="if(this.value.length===4 && event.keyCode!==8) return false;" placeholder="کد تایید چهار رقمی"/>`;
-        let footer = `<button onclick='user_login_send_code()' class='cbtn cbtn-login-submit'>ارسال</button>`;
-        let close_able = 0;
-        let delay = 1000;
-        modal_show(header, content, footer, close_able, delay);
+        modal_show_to_send_code();
         setTimeout(function () {
             $("#login_user_code").focus();
         }, 1200);
@@ -201,6 +196,41 @@ const result_send_sms = (send_code) => {
         snackbar(send_code.message, "red"); 
         $("#login_input").focus();
     }
+};
+
+const modal_show_to_send_code = () => {
+    let header  = `کد تایید را وارد کنید <br><span class="phone_under_send_code">${phone}</spon>`;
+    let content = `<input class='cinput cinput-login' id="login_user_code" type="number" onkeydown="if(this.value.length===4 && event.keyCode!==8) return false;" placeholder="کد تایید چهار رقمی"/>`;
+    let footer  = `<span id="resend_code_to_user"><span class="timer_send_code">00:59</span><span class="resend_code_to_user_text">ارسال مجدد کد</span></span><button onclick='user_login_send_code()' class='cbtn cbtn-login-submit'>ارسال</button><span onclick="edit_entered_number()" id="edit_entered_phone">اصلاح شماره</span>`;
+    let close_able = 0;
+    let delay = 1000;
+    start_timer_send_code();
+    $(".resend_code_to_user_text").css('color','silver').attr('onclick','').css('font-size','7pt');
+    modal_show(header, content, footer, close_able, delay);
+};
+
+const start_timer_send_code = () => {
+    $(".timer_send_code").fadeIn("fast");
+    i = 59;
+    timer = setInterval(function() {
+        if (i<10) {
+            $(".timer_send_code").text("00:0"+i);
+        } else {
+            $(".timer_send_code").text("00:"+i);
+        }
+        if (i == 0) {
+            $(".resend_code_to_user_text").css('color','#1967D2').attr('onclick','user_login_send_code_to_user('+phone+','+JSON.stringify(location)+')').css('font-size','10pt');
+            $(".timer_send_code").fadeOut("fast");
+            clearInterval(timer);
+        }
+        i--;
+    }, 1000);
+};
+
+const edit_entered_number = () => {
+    modal_hide();
+    user_login(1000);
+    clearInterval(timer);
 };
 
 const user_login_send_code = () => {
@@ -215,7 +245,7 @@ const user_login_send_code = () => {
             $("#login_user_code").focus();
             console.log("چیزی که وارد کردی به درد نمیخوره");
         } else {
-            console.log("چیزی که وارد کردی به خوبه");
+            console.log("چیزی که وارد کردی خوبه");
             user_login_verify_code(code);
         }
     }
@@ -251,7 +281,7 @@ const next_page = title => {
             case "home":
                 titles_home.push(title);
                 scrollRight = $("#home").scrollLeft() + $(".home_page").width();
-                $('#home').animate({ scrollLeft: scrollRight + 'px' }, 200).promise().done(function () {
+                $('#home').animate({ scrollLeft: scrollRight + 'px' }, 400).promise().done(function () {
                     loading = 0;
                 });
                 home++;
@@ -260,7 +290,7 @@ const next_page = title => {
             case "search":
                 titles_search.push(title);
                 scrollRight = $("#search").scrollLeft() + $(".search_page").width();
-                $('#search').animate({ scrollLeft: scrollRight + 'px' }, 200).promise().done(function () {
+                $('#search').animate({ scrollLeft: scrollRight + 'px' }, 400).promise().done(function () {
                     loading = 0;
                 });
                 search++;
@@ -269,7 +299,7 @@ const next_page = title => {
             case "locations":
                 titles_locations.push(title);
                 scrollRight = $("#locations").scrollLeft() + $(".locations_page").width();
-                $('#locations').animate({ scrollLeft: scrollRight + 'px' }, 200).promise().done(function () {
+                $('#locations').animate({ scrollLeft: scrollRight + 'px' }, 400).promise().done(function () {
                     loading = 0;
                 });
                 locations++;
@@ -278,7 +308,7 @@ const next_page = title => {
             case "bascket":
                 titles_bascket.push(title);
                 scrollRight = $("#bascket").scrollLeft() + $(".bascket_page").width();
-                $('#bascket').animate({ scrollLeft: scrollRight + 'px' }, 200).promise().done(function () {
+                $('#bascket').animate({ scrollLeft: scrollRight + 'px' }, 400).promise().done(function () {
                     loading = 0;
                 });
                 bascket++;
@@ -287,7 +317,7 @@ const next_page = title => {
             case "history_order":
                 titles_history.push(title);
                 scrollRight = $("#history_order").scrollLeft() + $(".history_page").width();
-                $('#history_order').animate({ scrollLeft: scrollRight + 'px' }, 200).promise().done(function () {
+                $('#history_order').animate({ scrollLeft: scrollRight + 'px' }, 400).promise().done(function () {
                     loading = 0;
                 });
                 history_order++;
@@ -296,7 +326,7 @@ const next_page = title => {
             case "wallet":
                 titles_wallet.push(title);
                 scrollRight = $("#wallet").scrollLeft() + $(".wallet_page").width();
-                $('#wallet').animate({ scrollLeft: scrollRight + 'px' }, 200).promise().done(function () {
+                $('#wallet').animate({ scrollLeft: scrollRight + 'px' }, 400).promise().done(function () {
                     loading = 0;
                 });
                 wallet++;
@@ -318,7 +348,7 @@ const prev_page = () => {
             case "home":
                 titles_home.pop();
                 scrollLeft = $("#home").scrollLeft() - $(".home_page").width();
-                $('#home').animate({ scrollLeft: scrollLeft + 'px' }, 200).promise().done(function () {
+                $('#home').animate({ scrollLeft: scrollLeft + 'px' }, 400).promise().done(function () {
                     loading = 0;
                 });
                 home--;
@@ -335,7 +365,7 @@ const prev_page = () => {
             case "search":
                 titles_search.pop();
                 scrollLeft = $("#search").scrollLeft() - $(".search_page").width();
-                $('#search').animate({ scrollLeft: scrollLeft + 'px' }, 200).promise().done(function () {
+                $('#search').animate({ scrollLeft: scrollLeft + 'px' }, 400).promise().done(function () {
                     loading = 0;
                 });
                 search--;
@@ -352,7 +382,7 @@ const prev_page = () => {
             case "locations":
                 titles_locations.pop();
                 scrollLeft = $("#locations").scrollLeft() - $(".locations_page").width();
-                $('#locations').animate({ scrollLeft: scrollLeft + 'px' }, 200).promise().done(function () {
+                $('#locations').animate({ scrollLeft: scrollLeft + 'px' }, 400).promise().done(function () {
                     loading = 0;
                 });
                 locations--;
@@ -368,7 +398,7 @@ const prev_page = () => {
             case "bascket":
                 titles_bascket.pop();
                 scrollLeft = $("#bascket").scrollLeft() - $(".bascket_page").width();
-                $('#bascket').animate({ scrollLeft: scrollLeft + 'px' }, 200).promise().done(function () {
+                $('#bascket').animate({ scrollLeft: scrollLeft + 'px' }, 400).promise().done(function () {
                     loading = 0;
                 });
                 bascket--;
@@ -385,7 +415,7 @@ const prev_page = () => {
             case "history_order":
                 titles_history.pop();
                 scrollLeft = $("#history_order").scrollLeft() - $(".history_page").width();
-                $('#history_order').animate({ scrollLeft: scrollLeft + 'px' }, 200).promise().done(function () {
+                $('#history_order').animate({ scrollLeft: scrollLeft + 'px' }, 400).promise().done(function () {
                     loading = 0;
                 });
                 history_order--;
@@ -399,7 +429,7 @@ const prev_page = () => {
             case "wallet":
                 titles_wallet.pop();
                 scrollLeft = $("#wallet").scrollLeft() - $(".wallet_page").width();
-                $('#wallet').animate({ scrollLeft: scrollLeft + 'px' }, 200).promise().done(function () {
+                $('#wallet').animate({ scrollLeft: scrollLeft + 'px' }, 400).promise().done(function () {
                     loading = 0;
                 });
                 wallet--;
@@ -532,13 +562,12 @@ const fill_list_items = (data, target, title) => {
         $.each(data, function (index, value) {
             count_this_item = 0; 
             for (i=0; i<order_list.length; i++) {
-                if (order_list[i].id == value.id) {
-                    count_this_item = order_list[i].count;
+                if (order_list[i].item_id == value.id) {
+                    count_this_item = order_list[i].item_count;
                 }
             }
             let name = value.name;
             data_description = JSON.parse(value.description);
-            console.log("IRC=> ", data_description.IRC);
             short_description = data_description.short_description;
             description = data_description.description;
             name_farsi = name.split("*")[0];
@@ -629,13 +658,13 @@ const select_address = (data, title, target) => {
         items += /*html*/
             `<tr>
                 <td style="text-align: right">${value.name}</td>
-                <td>${value.price.replace("تومان", "")}</td>
-                <td id="${value.id}">
-                    <div class="plus_mines plus_mines_bascket"><span onclick="inc_item(${value.id})" class="oprator plus">+</span><span class="number">${value.count}</span><span onclick="dec_item(${value.id})" class="oprator mines">-</span></div>
+                <td>${value.price.toString().replace("تومان", "")}</td>
+                <td id="${value.item_id}">
+                    <div class="plus_mines plus_mines_bascket"><span onclick="inc_item(${value.item_id})" class="oprator plus">+</span><span class="number">${value.item_count}</span><span onclick="dec_item(${value.item_id})" class="oprator mines">-</span></div>
                 </td>
-                <td>${cama_for_digit(value.count * parseInt((value.price).replace("/", "")))}</td>
+                <td>${cama_for_digit(value.item_count * parseInt((value.price).toString().replace("/", "")))}</td>
             </tr>`;
-        main_price += value.count * parseInt((value.price).replace("/", ""));
+        main_price += value.item_count * parseInt((value.price).toString().replace("/", ""));
     });
 
     $(target).html( /*html*/
@@ -1060,16 +1089,18 @@ const bascket_fill = (order_list) => {
         }
 
         $.each(order_list, function (index, value) {
+
+            this_price = ((value.price).toString()).replace("تومان", "");
             items += /*html*/
                 `<tr>
                 <td style="text-align: right">${value.name}</td>
-                <td>${value.price.replace("تومان", "")}</td>
-                <td id="${value.id}">
-                    <div class="plus_mines plus_mines_bascket"><span onclick="inc_item(${value.id})" class="oprator plus">+</span><span class="number">${value.count}</span><span onclick="dec_item(${value.id})" class="oprator mines">-</span></div>
+                <td>${this_price}</td>
+                <td id="${value.item_id}">
+                    <div class="plus_mines plus_mines_bascket"><span onclick="inc_item(${value.item_id})" class="oprator plus">+</span><span class="number">${value.item_count}</span><span onclick="dec_item(${value.item_id})" class="oprator mines">-</span></div>
                 </td>
-                <td>${cama_for_digit(value.count * parseInt((value.price).replace("/", "")))}</td>
+                <td>${cama_for_digit(value.item_count * parseInt((value.price).toString().replace("/", "")))}</td>
             </tr>`;
-            main_price += value.count * parseInt((value.price).replace("/", ""));
+            main_price += value.item_count * parseInt((value.price).toString().replace("/", ""));
         });
     }
     $("#bascket_page_1").html( /*html*/
@@ -1130,162 +1161,193 @@ $(".toggle_slide_button").click(function (e) {
     e.preventDefault();
     e.stopPropagation();
 });
-
+let item_is_adding = 0;
 $(".main_page").on("click", ".oprator", function () {
-    if ($(this).parent().hasClass("plus_mines_bascket")) {
+    if (item_is_adding) {console.log('وایسا دارم اضافه میکنم');return false;} else item_is_adding = 1;
+    target_element = $(this);
+    target_element.html('<i class="fa fa-spinner fa-spin"></i>');
+    if (target_element.parent().hasClass("plus_mines_bascket")) {
         let item_id;
-        item_id = $(this).closest("td").attr("id");
-        if ($(this).hasClass("plus")) {
-            let add_to_cart_result = add_to_cart(item_id, "plus");
-            if (add_to_cart_result.status === "ok") {
-                $(this).next().text(parseInt($(this).next().text()) + 1);
-                $.each(order_list, function (index, value) {
-                    if (value.id === item_id) {
-                        value.count++;
-                        item_exist = 1;
-                    }
-                });
-                let cart = $('.shopping-cart');
-                is_adding++;
-                setTimeout(function () {
-                    cart.effect("shake", {
-                        times: 2
-                    }, 200);
-                    $(".badget_bascket").text(parseInt($(".badget_bascket").text()) + 1).fadeIn("fast").css('display', 'flex');
-                    is_adding--;
-                }, 100);
-
-            } else {
-                snackbar(add_to_cart_result.message, "red");
-            }
-        } else if ($(this).hasClass("mines")) {
-            if (is_adding) {
-                console.log("is adding please wait");
-            } else {
-                let add_to_cart_result = add_to_cart(item_id, "mines");
+        item_id = target_element.closest("td").attr("id");
+        if (target_element.hasClass("plus")) {
+            //let add_to_cart_result = add_to_cart(item_id, "plus");
+            $.post("backend/backend.php", {
+                code: "add_to_cart",
+                func: "plus",
+                item_id: item_id
+            }, function (add_to_cart_result) {
+                console.log("bascket_item_plus=>",add_to_cart_result);
                 if (add_to_cart_result.status === "ok") {
-                    for (let i = 0; i < order_list.length; i++) {
-                        if (order_list[i].id === item_id) {
-                            order_list[i].count--;
-                            if (order_list[i].count === 0) {
-                                order_list.splice(i, 1);
-                            }
+                    target_element.next().text(parseInt(target_element.next().text()) + 1);
+                    $.each(order_list, function (index, value) {
+                        if (value.item_id === item_id) {
+                            value.item_count++;
+                            item_exist = 1;
                         }
-                    }
-                    $(this).prev().text(parseInt($(this).prev().text()) - 1);
-                    if ($(this).prev().text() < 0) {
-                        $(this).prev().text(0);
-                    } else {
-                        $(".badget_bascket").text(parseInt($(".badget_bascket").text()) - 1);
-                    }
-                    if (parseInt($(".badget_bascket").text()) <= 0) {
-                        $(".badget_bascket").fadeOut("fast");
-                        $(".badget_bascket").text(0);
-                    }
-                } else {
-                    snackbar(add_to_cart_result.message, "red");
-                }
-            }
-        }
-    } else {
-        let item_exist = 0;
-        let item_id = $(this).closest("li").attr("target");
-        let item_name = $(this).closest("li").find(".name").text();
-        let item_price = $(this).closest("li").find(".price").text();
-        if ($(this).hasClass("plus")) {
-            // if (bascket_item_shop_id) {
-            //     // 
-            // }
-            // if (active_article != "search") {
-            //     // bascket_item_shop_id = shop_id;
-            // }
-            let add_to_cart_result = add_to_cart(item_id, "plus");
-            if (add_to_cart_result.status === "ok") {
-                $(this).next().text(parseInt($(this).next().text()) + 1);
-                $.each(order_list, function (index, value) {
-                    if (value.id === item_id) {
-                        value.count++;
-                        item_exist = 1;
-                    }
-                });
-                if (!item_exist) {
-                    item = {
-                        "id": item_id,
-                        "name": item_name,
-                        "price": item_price,
-                        "count": 1
-                    };
-                    order_list.push(item);
-                }
-                let cart = $('.shopping-cart');
-                let imgtodrag = $(this).parent().parent().parent().parent().find("img").eq(0);
-                if (imgtodrag) {
-                    is_adding++;
-                    let imgclone = imgtodrag.clone()
-                        .offset({
-                            top: imgtodrag.offset().top,
-                            left: imgtodrag.offset().left
-                        })
-                        .css({
-                            'opacity': '0.8',
-                            'position': 'absolute',
-                            'height': '150px',
-                            'width': '150px',
-                            'z-index': '100'
-                        })
-                        .appendTo($('body'))
-                        .animate({
-                            'top': cart.offset().top + 10,
-                            'left': cart.offset().left + 10,
-                            'width': 75,
-                            'height': 75
-                        }, 1000, 'easeInOutExpo');
-
+                    });
+                    let cart = $('.shopping-cart');
                     setTimeout(function () {
                         cart.effect("shake", {
                             times: 2
                         }, 200);
                         $(".badget_bascket").text(parseInt($(".badget_bascket").text()) + 1).fadeIn("fast").css('display', 'flex');
-                        is_adding--;
-                    }, 1500);
-                    imgclone.animate({
-                        'width': 0,
-                        'height': 0
-                    }, function () {
-                        $(this).detach();
-                    });
-                }
-            } else {
-                snackbar(add_to_cart_result.message, "red");
-            }
-        } else if ($(this).hasClass("mines")) {
-            if (is_adding) {
-                console.log("is adding please wait");
-            } else {
-                let add_to_cart_result = add_to_cart(item_id, "mines");
-                if (add_to_cart_result.status === "ok") {
-                    for (let i = 0; i < order_list.length; i++) {
-                        if (order_list[i].id === item_id) {
-                            order_list[i].count--;
-                            if (order_list[i].count === 0) {
-                                order_list.splice(i, 1);
+                        item_is_adding = 0;
+                        target_element.html('+');
+                    }, 100);
+                } else {
+                    snackbar(add_to_cart_result.message, "red");
+                    item_is_adding = 0;
+                    target_element.html('+');
+                } 
+            });
+        } else if (target_element.hasClass("mines")) {
+
+                //let add_to_cart_result = add_to_cart(item_id, "mines");
+                $.post("backend/backend.php", {
+                    code: "add_to_cart",
+                    func: "mines",
+                    item_id: item_id
+                }, function (add_to_cart_result) {
+                    console.log("bascket_item_mines=>",add_to_cart_result);
+                    if (add_to_cart_result.status === "ok") {
+                        for (let i = 0; i < order_list.length; i++) {
+                            if (order_list[i].item_id == item_id) {
+                                order_list[i].item_count--;
+                                if (order_list[i].item_count == 0) {
+                                    order_list.splice(i, 1);
+                                    //bascket_fill(order_list);
+                                }
                             }
                         }
-                    }
-                    $(this).prev().text(parseInt($(this).prev().text()) - 1);
-                    if ($(this).prev().text() < 0) {
-                        $(this).prev().text(0);
+                        target_element.prev().text(parseInt(target_element.prev().text()) - 1);
+                        if (target_element.prev().text() < 0) {
+                            target_element.prev().text(0);
+                        } else {
+                            $(".badget_bascket").text(parseInt($(".badget_bascket").text()) - 1);
+                        }
+                        if (parseInt($(".badget_bascket").text()) <= 0) {
+                            $(".badget_bascket").fadeOut("fast");
+                            $(".badget_bascket").text(0);
+                        }
                     } else {
-                        $(".badget_bascket").text(parseInt($(".badget_bascket").text()) - 1);
+                        snackbar(add_to_cart_result.message, "red");
                     }
-                    if (parseInt($(".badget_bascket").text()) <= 0) {
-                        $(".badget_bascket").fadeOut("fast");
-                        $(".badget_bascket").text(0);
+                    item_is_adding = 0;
+                    target_element.html('-');
+                });
+
+        }
+    } else {
+        let item_exist = 0;
+        let item_id = target_element.closest("li").attr("target");
+        let item_name = target_element.closest("li").find(".name").text();
+        let item_price = target_element.closest("li").find(".price").text();
+        if (target_element.hasClass("plus")) {
+            //let add_to_cart_result = add_to_cart(item_id, "plus");
+            $.post("backend/backend.php", {
+                code: "add_to_cart",
+                func: "plus",
+                item_id: item_id
+            }, function (add_to_cart_result) {
+                console.log("list_item_plus=>",add_to_cart_result);
+
+                if (add_to_cart_result.status === "ok") {
+                    target_element.next().text(parseInt(target_element.next().text()) + 1);
+                    $.each(order_list, function (index, value) {
+                        if (value.item_id === item_id) {
+                            value.item_count++;
+                            item_exist = 1;
+                        }
+                    });
+                    if (!item_exist) {
+                        item = {
+                            "item_id": item_id,
+                            "name": item_name,
+                            "price": item_price,
+                            "item_count": 1
+                        };
+                        order_list.push(item);
+                    }
+                    let cart = $('.shopping-cart');
+                    let imgtodrag = target_element.parent().parent().parent().parent().find("img").eq(0);
+                    if (imgtodrag) {
+                        let imgclone = imgtodrag.clone()
+                            .offset({
+                                top: imgtodrag.offset().top,
+                                left: imgtodrag.offset().left
+                            })
+                            .css({
+                                'opacity': '0.8',
+                                'position': 'absolute',
+                                'height': '150px',
+                                'width': '150px',
+                                'z-index': '100'
+                            })
+                            .appendTo($('body'))
+                            .animate({
+                                'top': cart.offset().top + 10,
+                                'left': cart.offset().left + 10,
+                                'width': 75,
+                                'height': 75
+                            }, 1000, 'easeInOutExpo');
+    
+                        setTimeout(function () {
+                            cart.effect("shake", {
+                                times: 2
+                            }, 200);
+                            $(".badget_bascket").text(parseInt($(".badget_bascket").text()) + 1).fadeIn("fast").css('display', 'flex');
+                            item_is_adding = 0;
+                            target_element.html('+');
+                        }, 1500);
+                        imgclone.animate({
+                            'width': 0,
+                            'height': 0
+                        }, function () {
+                            $(this).detach();
+                        });
                     }
                 } else {
                     snackbar(add_to_cart_result.message, "red");
+                    item_is_adding = 0;
+                    target_element.html('+');
                 }
-            }
+            });
+        } else if (target_element.hasClass("mines")) {
+
+                //let add_to_cart_result = add_to_cart(item_id, "mines");
+                $.post("backend/backend.php", {
+                    code: "add_to_cart",
+                    func: "mines",
+                    item_id: item_id
+                }, function (add_to_cart_result) {
+
+                    if (add_to_cart_result.status === "ok") {
+                        console.log("list_item_mines=>",add_to_cart_result);
+                        for (let i = 0; i < order_list.length; i++) {
+                            if (order_list[i].item_id == item_id) {
+                                order_list[i].item_count--;
+                                if (order_list[i].item_count == 0) {
+                                    order_list.splice(i, 1);
+                                    //bascket_fill(order_list);
+                                }
+                            }
+                        }
+                        target_element.prev().text(parseInt(target_element.prev().text()) - 1);
+                        if (target_element.prev().text() < 0) {
+                            target_element.prev().text(0);
+                        } else {
+                            $(".badget_bascket").text(parseInt($(".badget_bascket").text()) - 1);
+                        }
+                        if (parseInt($(".badget_bascket").text()) <= 0) {
+                            $(".badget_bascket").fadeOut("fast");
+                            $(".badget_bascket").text(0);
+                        }
+                    } else {
+                        snackbar(add_to_cart_result.message, "red");
+                    }
+                    item_is_adding = 0;
+                    target_element.html('-');
+                });
         }
     }
 });

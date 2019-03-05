@@ -93,7 +93,90 @@ switch ($_POST[code]) {
 		case 'exit_user':
 				exit_user();
 				break;
+		case 'get_order':
+				get_order();
+				break;
 }
+function get_order(){
+	$conn=$GLOBALS['conn'];
+	$order_id=+session_get('order_id');
+	$user_id=+session_get('user_id');
+	$shop_id=$GLOBALS['shop_id'];
+	$type = 3;
+
+	if ( $order_id>0 ) {
+
+		$stmt = $conn->prepare( "SELECT * FROM `order_tbl` WHERE id=?" );
+		$stmt->bind_param( "i", $order_id );
+
+	} else if ( $user_id ) {
+		$stmt = $conn->prepare( "SELECT * FROM `order_tbl` WHERE shop_id=? AND user_id=?  ORDER BY id desc LIMIT 1" );
+		$stmt->bind_param( "ii", $shop_id, $user_id );
+	}
+	$stmt->execute();
+	$result = $stmt->get_result();
+	if ( $row = $result->fetch_assoc() ) {
+		$order_Array = $row;
+	}
+	if(($order_Array[status]!=2&&$order_Array[status]!=1)||!$order_Array){
+		if($order_Array[status]!=3||($order_Array[status]==3&&$order_Array[fact_status]==0)||!$order_Array){
+			$order_Array=insert_order($user_id,$type,$shop_id);
+		}
+	}
+
+	$sql="UPDATE `order_tbl` SET type=$type WHERE id=".$order_Array["id"]." AND user_id=$user_id";
+	$conn->query($sql);
+
+	$stmt = $conn->prepare( "SELECT order_item.option_price,order_item.item_id,order_item.comment,order_item.item_count,item.name,item.picture,item.status,item.price,item.unit,item.weight FROM `order_item` INNER JOIN `item` ON order_item.item_id=item.id AND order_item.order_id=?" );
+	$stmt->bind_param( "i", $order_Array[ 'id' ] );
+	$stmt->execute();
+	$result = $stmt->get_result();
+	while ( $row = $result->fetch_assoc() ) {
+		$item_Array[] = $row;
+	}
+
+	$stmt = $conn->prepare( "SELECT * FROM `sep` WHERE order_id=?" );
+	$stmt->bind_param( "i", $order_Array[ 'id' ] );
+	$stmt->execute();
+	$result = $stmt->get_result();
+	if ( $row = $result->fetch_assoc() ) {
+		$sep_Array = $row;
+	}
+	$json->order = $order_Array;
+	$json->item = $item_Array;
+	$json->sep = $sep_Array;
+	header( 'Content-Type: application/json' );
+	echo json_encode( $json, JSON_NUMERIC_CHECK );
+	$result->close();
+}
+
+function insert_order($user_id,$type,$shop_id){
+	$conn=$GLOBALS['conn'];
+	$flag=true;
+	while($flag==true){
+	$order_code=rand(1000000000,9999999999).rand(1000000000,9999999999);
+	$sql="SELECT COUNT(order_code) AS count FROM `order_tbl` WHERE shop_id=$shop_id AND order_code='$order_code'";
+	$result = $conn->query( $sql );
+	if ( $row = $result->fetch_assoc() ) {
+		if($row['count']>0)
+			$flag=true;
+		else
+			$flag=false;
+	}
+	}
+	$stmt = $conn->prepare( "INSERT INTO `order_tbl`( `user_id`, `shop_id`, `status`,`type`,order_code,time_created) VALUES (?,?,1,?,?,?)");
+	$stmt->bind_param( "iiiii",$user_id,$shop_id,$type,$order_code,$_SERVER[REQUEST_TIME]);
+	$stmt->execute();
+	$order_id=$conn->insert_id;
+	$sql="SELECT * FROM `order_tbl` WHERE id=$order_id";
+	$result = $conn->query( $sql );
+	if ( $row = $result->fetch_assoc() ) {
+		$order = $row;
+	}
+	session_set("order_id",$order_id);
+	return $order;
+}
+
 function exit_user(){
 	session_clear();
 	$json->status = "ok";
@@ -509,8 +592,8 @@ function get_option_force($item_id){
 }
 function add_to_cart(){
 	$conn=$GLOBALS['conn'];
-	$item_id = +$_POST[ 'item_id' ];
-	$order_id = +$_POST[ 'order_id' ];
+	$item_id = +$_POST['item_id'];
+	$order_id = +session_get('order_id');
 	$func = $_POST[ 'func' ];
 	$comment=$_POST[ 'comment' ];
 

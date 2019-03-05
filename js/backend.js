@@ -381,7 +381,7 @@ const user_login_send_code_to_user = (phone, location) => {
 const user_login_verify_code = (code) => {
     spinner('start');
     console.log("اومد این این تو دیگه کد رو دارم میدم به مهرشاد");
-    console.log(code)
+    console.log(code);
     // کدی که یوزر دریافت کرده رو بهت میدم بهم بگو کدش درسته یا غلطه
     //دوست عزیز،شماره تلفن را هم بفرست.مهرشاد
     $.post("backend/backend.php", {
@@ -434,16 +434,25 @@ const add_to_cart = (item_id, func) => {
         default:
             //
     }
-    let data = {
-        "status": "ok",
-        "message": "success"
-    };
+    console.log("func=> ",func, item_id);
+    $.post("backend/backend.php", {
+        code: "add_to_cart",
+        func: func,
+        item_id: item_id
+    }, function (data) {
+        console.log("add_to_cart=>", data);
+        result_add_to_cart(data, func);
+    });
+    //return data;
+    // let data = {
+    //     "status": "ok",
+    //     "message": "success"
+    // };
     // OR
     // data = {
     //     "status": "fail",
     //     "message": "خطا در ارتباط با سرور"
     // };
-    return data;
 };
 
 const get_around_pharm = (lat, long) => {
@@ -645,5 +654,20 @@ const exit_user = () => {
     }, function (data) {
         console.log(data);
         result_exit_user(data);    
+    });
+};
+
+const get_order = () => {
+    $.post('backend/backend.php', {
+        code: 'get_order'
+    }, function(data) {
+        count_all_items = 0;
+        console.log('get_order=> ', data);
+        if (data.item) order_list = data.item;
+        $.each(order_list, function (index, value) {
+           count_all_items += value.item_count;
+        });
+        if (count_all_items) $(".badget_bascket").text(count_all_items).css('display','flex').fadeIn();
+        console.log(count_all_items);
     });
 };
