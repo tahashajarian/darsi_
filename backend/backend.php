@@ -98,6 +98,7 @@ switch ($_POST[code]) {
 				break;
 }
 function get_order(){
+
 	$conn=$GLOBALS['conn'];
 	$order_id=+session_get('order_id');
 	$user_id=+session_get('user_id');
@@ -105,18 +106,21 @@ function get_order(){
 	$type = 3;
 
 	if ( $order_id>0 ) {
-
 		$stmt = $conn->prepare( "SELECT * FROM `order_tbl` WHERE id=?" );
 		$stmt->bind_param( "i", $order_id );
-
-	} else if ( $user_id ) {
+		$stmt->execute();
+		$result = $stmt->get_result();
+		if ( $row = $result->fetch_assoc() ) {
+			$order_Array = $row;
+		}
+	} else if ( $user_id>0 ) {
 		$stmt = $conn->prepare( "SELECT * FROM `order_tbl` WHERE shop_id=? AND user_id=?  ORDER BY id desc LIMIT 1" );
 		$stmt->bind_param( "ii", $shop_id, $user_id );
-	}
-	$stmt->execute();
-	$result = $stmt->get_result();
-	if ( $row = $result->fetch_assoc() ) {
-		$order_Array = $row;
+		$stmt->execute();
+		$result = $stmt->get_result();
+		if ( $row = $result->fetch_assoc() ) {
+			$order_Array = $row;
+		}
 	}
 	if(($order_Array[status]!=2&&$order_Array[status]!=1)||!$order_Array){
 		if($order_Array[status]!=3||($order_Array[status]==3&&$order_Array[fact_status]==0)||!$order_Array){

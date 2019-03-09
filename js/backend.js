@@ -434,6 +434,7 @@ const add_to_cart = (item_id, func) => {
         default:
             //
     }
+
     console.log("func=> ",func, item_id);
     $.post("backend/backend.php", {
         code: "add_to_cart",
@@ -631,7 +632,7 @@ const get_user = () => {
         console.log(data);
         if (data.status == "ok") {
             user = data.data;
-            snackbar(data.message, "green");
+            if (user) snackbar(data.message, "green");
         }
     });
 };

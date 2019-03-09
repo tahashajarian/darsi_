@@ -27,7 +27,7 @@ $(document).ready(function () {
 
 
 // define variable    
-let phone; let lat; let long; let locations = 0; let user_id = 3590; let shop_id = 110; let titles_home = []; let titles_search = []; let titles_locations = []; let titles_bascket = []; let titles_profile = []; let titles_wallet = []; let titles_history = []; let titles_messages = []; let titles_doctor = []; let loading = 0; let home = 0; let history_order = 0; let search = 0; let user_location = {latitude: "35.5865586", longitude: "51.7586203"}; let wallet = 0; let bascket = 0; let data = {}; let order_list = []; let pharms_marker = []; let bascket_item_shop_id = 0; let order_id = 0; let active_article; let is_open; let scrollRight; let scrollLeft; let user = null; let is_adding = 0; let mymap; let marker_location; let order = {};
+let phone; let lat; let long; let locations = 0; let user_id = 3590; let shop_id = 110; let titles_home = []; let titles_search = []; let titles_locations = []; let titles_bascket = []; let titles_profile = []; let titles_wallet = []; let titles_history = []; let titles_messages = []; let titles_doctor = []; let loading = 0; let home = 0; let history_order = 0; let search = 0; let user_location = { latitude: "35.5865586", longitude: "51.7586203" }; let wallet = 0; let bascket = 0; let data = {}; let order_list = []; let pharms_marker = []; let bascket_item_shop_id = 0; let order_id = 0; let active_article; let is_open; let scrollRight; let scrollLeft; let user = null; let is_adding = 0; let mymap; let marker_location; let order = {};
 
 const main_button = target => {
     if (!loading) {
@@ -156,10 +156,10 @@ const toggle_slide_button_out = () => {
     $(".toggle_slide_buttons").attr("is_open", "1");
 };
 
-const user_login = (delay=0) => {
+const user_login = (delay = 0) => {
     let header = `شماره تلفن همراه خود را وارد کنید`;
     let content = `<input class='cinput cinput-login' type="number" onkeydown="if(this.value.length===11 && event.keyCode!==8) return false;" id='login_input' placeholder='مثال: 09123456789'>`;
-    let footer =  `<button onclick='user_login_send_phone()' class='cbtn cbtn-login-submit'>ارسال</button>`;
+    let footer = `<button onclick='user_login_send_phone()' class='cbtn cbtn-login-submit'>ارسال</button>`;
     let close_able = 1;
     modal_show(header, content, footer, close_able, delay);
     setTimeout(function () {
@@ -193,33 +193,33 @@ const result_send_sms = (send_code) => {
             $("#login_user_code").focus();
         }, 1200);
     } else {
-        snackbar(send_code.message, "red"); 
+        snackbar(send_code.message, "red");
         $("#login_input").focus();
     }
 };
 
 const modal_show_to_send_code = () => {
-    let header  = `کد تایید را وارد کنید <br><span class="phone_under_send_code">${phone}</spon>`;
+    let header = `کد تایید را وارد کنید <br><span class="phone_under_send_code">${phone}</spon>`;
     let content = `<input class='cinput cinput-login' id="login_user_code" type="number" onkeydown="if(this.value.length===4 && event.keyCode!==8) return false;" placeholder="کد تایید چهار رقمی"/>`;
-    let footer  = `<span id="resend_code_to_user"><span class="timer_send_code">00:59</span><span class="resend_code_to_user_text">ارسال مجدد کد</span></span><button onclick='user_login_send_code()' class='cbtn cbtn-login-submit'>ارسال</button><span onclick="edit_entered_number()" id="edit_entered_phone">اصلاح شماره</span>`;
+    let footer = `<span id="resend_code_to_user"><span class="timer_send_code">00:59</span><span class="resend_code_to_user_text">ارسال مجدد کد</span></span><button onclick='user_login_send_code()' class='cbtn cbtn-login-submit'>ارسال</button><span onclick="edit_entered_number()" id="edit_entered_phone">اصلاح شماره</span>`;
     let close_able = 0;
     let delay = 1000;
     start_timer_send_code();
-    $(".resend_code_to_user_text").css('color','silver').attr('onclick','').css('font-size','7pt');
+    $(".resend_code_to_user_text").css('color', 'silver').attr('onclick', '').css('font-size', '7pt');
     modal_show(header, content, footer, close_able, delay);
 };
 
 const start_timer_send_code = () => {
     $(".timer_send_code").fadeIn("fast");
     i = 59;
-    timer = setInterval(function() {
-        if (i<10) {
-            $(".timer_send_code").text("00:0"+i);
+    timer = setInterval(function () {
+        if (i < 10) {
+            $(".timer_send_code").text("00:0" + i);
         } else {
-            $(".timer_send_code").text("00:"+i);
+            $(".timer_send_code").text("00:" + i);
         }
         if (i == 0) {
-            $(".resend_code_to_user_text").css('color','#1967D2').attr('onclick','user_login_send_code_to_user('+phone+','+JSON.stringify(location)+')').css('font-size','10pt');
+            $(".resend_code_to_user_text").css('color', '#1967D2').attr('onclick', 'user_login_send_code_to_user(' + phone + ',' + JSON.stringify(location) + ')').css('font-size', '10pt');
             $(".timer_send_code").fadeOut("fast");
             clearInterval(timer);
         }
@@ -256,6 +256,7 @@ const result_user_login_verify_code = (data) => {
     if (data.status === "ok") {
         modal_hide();
         user = data.data;
+        get_order();
         let name_user = user.name;
         if (name_user.length > 1) {
             snackbar(`${name_user} گرامی خوش آمدید `, "green");
@@ -560,8 +561,8 @@ const fill_list_items = (data, target, title) => {
         $(target).html("<div class='no_item'>!موردی برای نمایش وجود ندارد</div>");
     } else {
         $.each(data, function (index, value) {
-            count_this_item = 0; 
-            for (i=0; i<order_list.length; i++) {
+            count_this_item = 0;
+            for (i = 0; i < order_list.length; i++) {
                 if (order_list[i].item_id == value.id) {
                     count_this_item = order_list[i].item_count;
                 }
@@ -577,11 +578,11 @@ const fill_list_items = (data, target, title) => {
             //     name += "...";
             // }
 
-            if (short_description.length > 5) {
+            if (short_description) {
                 // short_description = short_description.substring(0, 100);
                 short_description += "<hr>";
             } else {
-                //
+                // اگه توضیح خلاصه نداشت چی بشه؟
             }
             let li_id = target.replace(" ", "_").replace("#", "") + index;
             $(target).append( /*html*/
@@ -1163,7 +1164,7 @@ $(".toggle_slide_button").click(function (e) {
 });
 let item_is_adding = 0;
 $(".main_page").on("click", ".oprator", function () {
-    if (item_is_adding) {console.log('وایسا دارم اضافه میکنم');return false;} else item_is_adding = 1;
+    if (item_is_adding) { console.log('وایسا دارم اضافه میکنم'); return false; } else item_is_adding = 1;
     target_element = $(this);
     target_element.html('<i class="fa fa-spinner fa-spin"></i>');
     if (target_element.parent().hasClass("plus_mines_bascket")) {
@@ -1176,7 +1177,7 @@ $(".main_page").on("click", ".oprator", function () {
                 func: "plus",
                 item_id: item_id
             }, function (add_to_cart_result) {
-                console.log("bascket_item_plus=>",add_to_cart_result);
+                console.log("bascket_item_plus=>", add_to_cart_result);
                 if (add_to_cart_result.status === "ok") {
                     target_element.next().text(parseInt(target_element.next().text()) + 1);
                     $.each(order_list, function (index, value) {
@@ -1198,44 +1199,43 @@ $(".main_page").on("click", ".oprator", function () {
                     snackbar(add_to_cart_result.message, "red");
                     item_is_adding = 0;
                     target_element.html('+');
-                } 
+                }
             });
         } else if (target_element.hasClass("mines")) {
 
-                //let add_to_cart_result = add_to_cart(item_id, "mines");
-                $.post("backend/backend.php", {
-                    code: "add_to_cart",
-                    func: "mines",
-                    item_id: item_id
-                }, function (add_to_cart_result) {
-                    console.log("bascket_item_mines=>",add_to_cart_result);
-                    if (add_to_cart_result.status === "ok") {
-                        for (let i = 0; i < order_list.length; i++) {
-                            if (order_list[i].item_id == item_id) {
-                                order_list[i].item_count--;
-                                if (order_list[i].item_count == 0) {
-                                    order_list.splice(i, 1);
-                                    //bascket_fill(order_list);
-                                }
+            //let add_to_cart_result = add_to_cart(item_id, "mines");
+            $.post("backend/backend.php", {
+                code: "add_to_cart",
+                func: "mines",
+                item_id: item_id
+            }, function (add_to_cart_result) {
+                console.log("bascket_item_mines=> ", add_to_cart_result);
+                if (add_to_cart_result.status === "ok") {
+                    for (let i = 0; i < order_list.length; i++) {
+                        if (order_list[i].item_id == item_id) {
+                            order_list[i].item_count--;
+                            if (order_list[i].item_count == 0) {
+                                order_list.splice(i, 1);
+                                //bascket_fill(order_list);
                             }
                         }
-                        target_element.prev().text(parseInt(target_element.prev().text()) - 1);
-                        if (target_element.prev().text() < 0) {
-                            target_element.prev().text(0);
-                        } else {
-                            $(".badget_bascket").text(parseInt($(".badget_bascket").text()) - 1);
-                        }
-                        if (parseInt($(".badget_bascket").text()) <= 0) {
-                            $(".badget_bascket").fadeOut("fast");
-                            $(".badget_bascket").text(0);
-                        }
-                    } else {
-                        snackbar(add_to_cart_result.message, "red");
                     }
-                    item_is_adding = 0;
-                    target_element.html('-');
-                });
-
+                    target_element.prev().text(parseInt(target_element.prev().text()) - 1);
+                    if (target_element.prev().text() < 0) {
+                        target_element.prev().text(0);
+                    } else {
+                        $(".badget_bascket").text(parseInt($(".badget_bascket").text()) - 1);
+                    }
+                    if (parseInt($(".badget_bascket").text()) <= 0) {
+                        $(".badget_bascket").fadeOut("fast");
+                        $(".badget_bascket").text(0);
+                    }
+                } else {
+                    snackbar(add_to_cart_result.message, "red");
+                }
+                item_is_adding = 0;
+                target_element.html('-');
+            });
         }
     } else {
         let item_exist = 0;
@@ -1249,8 +1249,7 @@ $(".main_page").on("click", ".oprator", function () {
                 func: "plus",
                 item_id: item_id
             }, function (add_to_cart_result) {
-                console.log("list_item_plus=>",add_to_cart_result);
-
+                console.log("list_item_plus=>", add_to_cart_result);
                 if (add_to_cart_result.status === "ok") {
                     target_element.next().text(parseInt(target_element.next().text()) + 1);
                     $.each(order_list, function (index, value) {
@@ -1290,7 +1289,7 @@ $(".main_page").on("click", ".oprator", function () {
                                 'width': 75,
                                 'height': 75
                             }, 1000, 'easeInOutExpo');
-    
+
                         setTimeout(function () {
                             cart.effect("shake", {
                                 times: 2
@@ -1307,47 +1306,47 @@ $(".main_page").on("click", ".oprator", function () {
                         });
                     }
                 } else {
-                    snackbar(add_to_cart_result.message, "red");
+                    if (!add_to_cart_result.message)snackbar('خطای نامعلوم', "red");
+                    else snackbar(add_to_cart_result.message, "red");
                     item_is_adding = 0;
                     target_element.html('+');
                 }
             });
         } else if (target_element.hasClass("mines")) {
+            //let add_to_cart_result = add_to_cart(item_id, "mines");
+            $.post("backend/backend.php", {
+                code: "add_to_cart",
+                func: "mines",
+                item_id: item_id
+            }, function (add_to_cart_result) {
 
-                //let add_to_cart_result = add_to_cart(item_id, "mines");
-                $.post("backend/backend.php", {
-                    code: "add_to_cart",
-                    func: "mines",
-                    item_id: item_id
-                }, function (add_to_cart_result) {
-
-                    if (add_to_cart_result.status === "ok") {
-                        console.log("list_item_mines=>",add_to_cart_result);
-                        for (let i = 0; i < order_list.length; i++) {
-                            if (order_list[i].item_id == item_id) {
-                                order_list[i].item_count--;
-                                if (order_list[i].item_count == 0) {
-                                    order_list.splice(i, 1);
-                                    //bascket_fill(order_list);
-                                }
+                if (add_to_cart_result.status === "ok") {
+                    console.log("list_item_mines=>", add_to_cart_result);
+                    for (let i = 0; i < order_list.length; i++) {
+                        if (order_list[i].item_id == item_id) {
+                            order_list[i].item_count--;
+                            if (order_list[i].item_count == 0) {
+                                order_list.splice(i, 1);
+                                //bascket_fill(order_list);
                             }
                         }
-                        target_element.prev().text(parseInt(target_element.prev().text()) - 1);
-                        if (target_element.prev().text() < 0) {
-                            target_element.prev().text(0);
-                        } else {
-                            $(".badget_bascket").text(parseInt($(".badget_bascket").text()) - 1);
-                        }
-                        if (parseInt($(".badget_bascket").text()) <= 0) {
-                            $(".badget_bascket").fadeOut("fast");
-                            $(".badget_bascket").text(0);
-                        }
-                    } else {
-                        snackbar(add_to_cart_result.message, "red");
                     }
-                    item_is_adding = 0;
-                    target_element.html('-');
-                });
+                    target_element.prev().text(parseInt(target_element.prev().text()) - 1);
+                    if (target_element.prev().text() < 0) {
+                        target_element.prev().text(0);
+                    } else {
+                        $(".badget_bascket").text(parseInt($(".badget_bascket").text()) - 1);
+                    }
+                    if (parseInt($(".badget_bascket").text()) <= 0) {
+                        $(".badget_bascket").fadeOut("fast");
+                        $(".badget_bascket").text(0);
+                    }
+                } else {
+                    snackbar(add_to_cart_result.message, "red");
+                }
+                item_is_adding = 0;
+                target_element.html('-');
+            });
         }
     }
 });
@@ -1584,9 +1583,8 @@ const result_update_user_name = (data, name) => {
         modal_hide();
     } else {
         snackbar("خطا در ارتباط", 'red');
-    } 
+    }
 };
-
 
 const result_exit_user = (data) => {
     spinner('end');
